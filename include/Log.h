@@ -7,7 +7,6 @@
 #include <string>
 
 #include "definitions.h"
-#include "LogBuffer.h"
 
 
 class Log : public std::ostream
@@ -32,7 +31,7 @@ public:
 
 		virtual int sync ( )
 		{
-			string strAdd = str(); str("");
+			std::string strAdd = str(); str("");
 			Log::type oldType = _type;
 
 			Log::nbChange = 0;
@@ -44,7 +43,7 @@ public:
 			else if(!Log::isUniqueType(typeMin) && (oldType & typeMin) == 0) return 0;
 
 			_output << "[Log]" << strAdd;
-			if(strAdd[strAdd.size()-1] != '\n') _output << endl;
+			if(strAdd[strAdd.size()-1] != '\n') _output << std::endl;
 
 			_output.flush();
 

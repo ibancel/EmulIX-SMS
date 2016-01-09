@@ -3,7 +3,7 @@
 
 #define DEBUG_MODE true
 
-#define MEMORY_SIZE 65536
+#define MEMORY_SIZE 65536 // RAM addresses
 #define REGISTER_SIZE 8
 #define CARTRIDGE_MAX_SIZE 524288
 

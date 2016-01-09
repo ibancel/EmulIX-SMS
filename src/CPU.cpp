@@ -3,6 +3,8 @@
 
 #include "CPU.h"
 
+using namespace std;
+
 CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 {
 	_memory = m;
