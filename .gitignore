@@ -1,0 +1,8 @@
+Emulator-SMS.cbp
+Emulator-SMS.depend
+Emulator-SMS.layout
+
+bin/*
+docs/*
+obj/*
+ROMS/*
