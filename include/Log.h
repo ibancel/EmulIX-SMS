@@ -27,7 +27,7 @@ public:
 	class LogBuffer : public std::stringbuf
 	{
 	public:
-		LogBuffer(std::ostream& str) : _output(str) {};
+		LogBuffer(std::ostream& str) : _output(str) { _type = type::NORMAL;};
 
 		virtual int sync ( )
 		{

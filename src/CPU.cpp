@@ -11,8 +11,8 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	_graphics = g;
 	_cartridge = c;
 
-	_pc = 0x0; // TODO changer à 0, 0x66 marche avec interrupt ?
-	_sp = MEMORY_SIZE; // = 0
+	_pc = 0x0; // reset (at $0000), IRQs (at $0038) and NMIs (at $0066)
+	_sp = 0xFDD0;
 
 	for(int i = 0 ; i < REGISTER_SIZE ; i++)
 		_register[i] = 0;
@@ -25,6 +25,10 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 
 	ifstream fichier("ROMS/zexall.sms");
 	//ifstream fichier("ROMS/Trans-Bot (UE).sms");
+	//ifstream fichier("ROMS/Astro Flash (J) [!].sms");
+	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms");
+	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms");
+	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms");
 
 	if(!fichier) exit(EXIT_FAILURE);
 
@@ -119,19 +123,45 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 		_register[R_A] = sum;
 	}
 	//
+	else if(index == 2) // SUB
+	{
+		uint8_t result = (uint8_t)(_register[R_A] - value);
+		setFlagBit(F_S, ((int8_t)(result) < 0));
+		setFlagBit(F_Z, (_register[R_A] == value));
+		setFlagBit(F_H, ((_register[R_A]&0xF) - (value&0xF) < (_register[R_A]&0xF))); // ?
+		setFlagBit(F_P, ((_register[R_A]>>7)==(value>>7) && (value>>7)!=(result>>7))); // ?
+		setFlagBit(F_N, 1);
+		setFlagBit(F_C, (result > _register[R_A])); // ?
+		setFlagBit(F_F3, (result>>2)&1);
+		setFlagBit(F_F5, (result>>4)&1);
+
+		_register[R_A] = result;
+	}
+	//
 	else if(index == 5) // XOR
 	{
 		_register[R_A] ^= value;
 		setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
 		setFlagBit(F_Z, (_register[R_A] == 0));
 		setFlagBit(F_H, 0);
-		setFlagBit(F_P, (_register[R_A]>>7));
+		setFlagBit(F_P, ((_register[R_A]&1) == 0));
 		setFlagBit(F_N, 0);
 		setFlagBit(F_C, 0);
 		setFlagBit(F_F3, (_register[R_A]>>2)&1);
 		setFlagBit(F_F5, (_register[R_A]>>4)&1);
 	}
-	//
+	else if(index == 6) // OR
+	{
+		_register[R_A] |= value;
+		setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
+		setFlagBit(F_Z, (_register[R_A] == 0));
+		setFlagBit(F_H, 0);
+		setFlagBit(F_P, (_register[R_A]<value));
+		setFlagBit(F_N, 0);
+		setFlagBit(F_C, 0);
+		setFlagBit(F_F3, (_register[R_A]>>2)&1);
+		setFlagBit(F_F5, (_register[R_A]>>4)&1);
+	}
 	else if(index == 7) // CP
 	{
 		/// TODO vérifier borrows & overflow
@@ -140,7 +170,7 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 		setFlagBit(F_Z, (sum == 0));
 		setFlagBit(F_H, ((_register[R_A]&0xF) - (value&0xF) < (_register[R_A]&0xF))); // ?
 		setFlagBit(F_P, ((_register[R_A]>>7)==(value>>7) && (value>>7)!=(sum>>7))); // ?
-		setFlagBit(F_N, 0);
+		setFlagBit(F_N, 1);
 		setFlagBit(F_C, (sum > _register[R_A])); // ?
 		setFlagBit(F_F3, (value>>2)&1);
 		setFlagBit(F_F5, (value>>4)&1);
@@ -152,15 +182,27 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 		slog << lwarning << "ALU " << (uint16_t)index << " is not implemented" << endl;
 }
 
-void CPU::portCommunication(bool rw, uint8_t address, uint16_t data)
+uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 {
 	if(address == 0x7E || address == 0x7F || address == 0xBE || address == 0xBF)
 	{
 		/// TODO !
-		/*if(rw)
+		slog << ldebug << hex << "<-----------> rw:" << rw << " a:" << (uint16_t)address << " d:" << (uint16_t)data << endl;
+
+		if(rw)
 			_graphics->write(address, data);
 		else
-			_graphics->read(address, data);*/
+			return _graphics->read(address);
+			//_graphics->read(address, data);
+
+	}
+	else if(address == 0xDE || address == 0xDF)
+	{
+		/// TODO understand (nationalisation ?)
+	}
+	else
+	{
+		slog << lwarning << hex << "Communication port 0x" << (uint16_t)address << " is not implemented" << endl;
 	}
 }
 
@@ -179,6 +221,14 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 
 	}
 	//
+	else if(x == 0 && z == 0 && y == 2) // DJNZ d
+	{
+		_register[R_B]--;
+		uint8_t d = _memory->read(_pc++);
+
+		if(_register[R_B] != 0)
+			_pc += (int8_t)d;
+	}
 	else if(x == 0 && z == 0 && y == 3) // JR d
 	{
 		_pc += (int8_t)(_memory->read(_pc)) + 1;
@@ -195,15 +245,50 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		val += (_memory->read(_pc++)<<8);
 		setRegisterPair(p, val);
 	}
+	else if(x == 0 && z == 1 && q == 1) // ADD HL,rp[p]
+	{
+		uint16_t oldVal = getRegisterPair(RP_HL);
+		uint16_t newVal = getRegisterPair(RP_HL)+getRegisterPair(p);
+
+		setFlagBit(F_H, ((oldVal&0xFFF) - (newVal&0xFFF) < (oldVal&0xFFF))); // ?
+		setFlagBit(F_N, 0);
+		setFlagBit(F_C, (newVal < oldVal));
+
+		setRegisterPair(RP_HL, newVal);
+	}
 	//
-	else if(x == 0 && z == 2 && q == 0 && p == 3) // LD (nn), A
+	else if(x == 0 && z == 2 && q == 0 && p == 0) // LD (BC),A
+	{
+		_memory->write(getRegisterPair(RP_BC), _register[R_A]);
+	}
+	else if(x == 0 && z == 2 && q == 0 && p == 0) // LD (DE),A
+	{
+		_memory->write(getRegisterPair(RP_DE), _register[R_A]);
+	}
+	else if(x == 0 && z == 2 && q == 0 && p == 2) // LD (nn),HL
+	{
+		uint16_t addr = _memory->read(_pc++);
+		addr += (_memory->read(_pc++)<<8);
+		_memory->write(addr, _register[R_L]);
+		_memory->write(addr+1, _register[R_H]);
+	}
+	else if(x == 0 && z == 2 && q == 0 && p == 3) // LD (nn),A
 	{
 		uint16_t addr = _memory->read(_pc++);
 		addr += (_memory->read(_pc++)<<8);
 		_memory->write(addr, _register[R_A]);
 	}
 	//
-	else if(x == 0 && z == 2 && q == 1 && p == 3) // LD A, (nn)
+	else if(x == 0 && z == 2 && q == 1 && p == 1) // LD A,(DE)
+	{
+		_register[R_A] = _memory->read(getRegisterPair(RP_DE));
+	}
+	else if(x == 0 && z == 2 && q == 1 && p == 2) // LD HL,(nn)
+	{
+		_register[R_L] = _memory->read(_pc++);
+		_register[R_H] = _memory->read(_pc++);
+	}
+	else if(x == 0 && z == 2 && q == 1 && p == 3) // LD A,(nn)
 	{
 		uint16_t val = _memory->read(_pc++);
 		val += (_memory->read(_pc++)<<8);
@@ -247,6 +332,29 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	{
 		aluOperation(y, _register[z]);
 	}
+	else if(x == 3 && z == 0) // RET cc[y]
+	{
+		bool c = condition(y);
+		if(c)
+		{
+			_pc = _stack[_sp++];
+			_pc += (_stack[_sp++]<<8);
+		}
+		slog << ldebug << hex << "RET(" << (c?"true":"false") << ") to " << (uint16_t)_pc << endl;
+	}
+	else if(x == 3 && z == 1 && q == 0) // POP rp2[p]
+	{
+		uint16_t value = _stack[_sp++];
+		value += (_stack[_sp++]<<8);
+		setRegisterPair2(p, value);
+	}
+	else if(x == 3 && z == 1 && q == 1 && p == 0) // RET
+	{
+		uint16_t addr = _stack[_sp++];
+		addr += (_stack[_sp++]<<8);
+		_pc = addr;
+		slog << ldebug << hex << "RET to " << (uint16_t)addr << endl;
+	}
 	//
 	else if(x == 3 && z == 2) // JP cc[y],nn
 	{
@@ -271,7 +379,12 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		/// TODO voir les sorties
 		uint8_t val = _memory->read(_pc++);
 		portCommunication(true, val, _register[R_A]);
-		slog << ldebug << "OUT ====> " << hex << (uint16_t)val << endl;
+		slog << ldebug << "OUT ====> " << hex << (uint16_t)val << " : " << (uint16_t)_register[R_A] << endl;
+	}
+	else if(x == 3 && z == 3 && y == 3) // IN A,(n)
+	{
+		uint8_t addr = _memory->read(_pc++);
+		_register[R_A] = portCommunication(false, addr);
 	}
 	//
 	else if(x == 3 && z == 3 && y == 6) // DI
@@ -280,14 +393,26 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		slog << ldebug << "-- TODO DI" << endl;
 	}
 	//
+	else if(x == 3 && z == 4) // CALL cc[y],nn
+	{
+		uint16_t addr = _memory->read(_pc++);
+		addr += (_memory->read(_pc++)<<8);
+
+		bool c = condition(y);
+		if(c)
+		{
+			_stack[--_sp] = (_pc >> 8);
+			_stack[--_sp] = (_pc & 0xFF);
+			_pc = addr;
+		}
+
+		slog << ldebug << "CALL(" << (c?"true":"false") << ") to " << hex << _pc << endl;
+	}
 	else if(x == 3 && z == 5 && q == 0) // PUSH rp2[p]
 	{
-		/// TODO
-		slog << ldebug << "-- TODO PUSH" << endl;
 		uint16_t val = getRegisterPair2(p);
-		_stack[_sp--] = (val >> 8);
-		_stack[_sp--] = (val & 0xFF);
-		//set
+		_stack[--_sp] = (val >> 8);
+		_stack[--_sp] = (val & 0xFF);
 	}
 	//
 	else if(x == 3 && z == 5 && q == 1 && p == 0) // CALL nn
@@ -295,8 +420,8 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		uint16_t newPC = _memory->read(_pc++);
 		newPC += (_memory->read(_pc++)<<8);
 
-		_stack[_sp--] = (_pc >> 8);
-		_stack[_sp--] = (_pc & 0xFF);
+		_stack[--_sp] = (_pc >> 8);
+		_stack[--_sp] = (_pc & 0xFF);
 
 		_pc = newPC;
 
@@ -327,6 +452,14 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	{
 
 	}
+	else if(x == 1 && z == 1 && y == 6)
+	{
+		portCommunication(true, _register[R_C], 0);
+	}
+	else if(x == 1 && z == 1 && y != 6)
+	{
+		portCommunication(true, _register[R_C], _register[y]);
+	}
 	//
 	else if(x == 1 && z == 6) // IM im[y]
 	{
@@ -334,6 +467,14 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		slog << ldebug << "-- TODO IM" << endl;
 	}
 	//
+	else if(x == 2 && z > 3 || y < 4) // NONI & NOP
+	{
+		/// TODO
+	}
+	else if(x == 2) //bli[y,z]
+	{
+		bliOperation(y, z);
+	}
 	else
 	{
 		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (ED) is not implemented" << endl;
@@ -352,6 +493,44 @@ bool CPU::condition(uint8_t code)
 		return getFlagBit(F_C);
 
 	return false;
+}
+
+void CPU::bliOperation(uint8_t x, uint8_t y)
+{
+	if(x == 6 && y == 0) // LDIR
+	{
+		/// TODO interrupts et tester ce bloc !
+		_memory->write(getRegisterPair(RP_DE), _memory->read(getRegisterPair(RP_HL)));
+		setRegisterPair(RP_DE, getRegisterPair(RP_DE)+1);
+		setRegisterPair(RP_HL, getRegisterPair(RP_HL)+1);
+		setRegisterPair(RP_BC, getRegisterPair(RP_BC)-1);
+
+		if(getRegisterPair(RP_BC) != 0)
+			_pc -= 2;
+
+		setFlagBit(F_H, 0);
+		setFlagBit(F_P, 0);
+		setFlagBit(F_N, 0);
+	}
+	else if(x == 6 && y == 3) // OTIR
+	{
+		uint16_t value = _memory->read(getRegisterPair(RP_HL));
+		//slog << ldebug << hex << "OTIR : R_C="<< (uint16_t)_register[R_C] << " R_B=" << (uint16_t)_register[R_B] << " RP_HL=" << (uint16_t)getRegisterPair(2) << " val=" << (uint16_t)value << endl;
+		portCommunication(true, _register[R_C], value);
+
+		setRegisterPair(RP_HL, getRegisterPair(RP_HL)+1);
+		_register[R_B]--;
+
+		if(_register[R_B] != 0)
+			_pc -= 2;
+
+		setFlagBit(F_Z, 1);
+		setFlagBit(F_N, 1);
+	}
+	else
+	{
+		slog << lwarning << hex << "BLI (" << (uint16_t)x << ", " << (uint16_t)y << ") is not implemented !" << endl;
+	}
 }
 
 void CPU::setRegisterPair(uint8_t code, uint16_t value)
@@ -379,6 +558,8 @@ void CPU::setRegisterPair(uint8_t code, uint16_t value)
 		default:
 			break;
 	}
+
+	slog << ldebug << hex << "set RP[" << (uint16_t)code << "] = " << value << endl;
 }
 
 void CPU::setRegisterPair2(uint8_t code, uint16_t value)
@@ -407,6 +588,8 @@ void CPU::setRegisterPair2(uint8_t code, uint16_t value)
 		default:
 			break;
 	}
+
+	slog << ldebug << hex << "set RP2[" << (uint16_t)code << "] = " << value << endl;
 }
 
 void CPU::setFlagBit(F_NAME f, uint8_t value)
@@ -422,7 +605,6 @@ void CPU::setFlagBit(F_NAME f, uint8_t value)
 
 uint16_t CPU::getRegisterPair(uint8_t code)
 {
-	return 0;
 	if(code < 3)
 		return ((_register[code*2]<<8) + _register[code*2+1]);
 
@@ -431,7 +613,6 @@ uint16_t CPU::getRegisterPair(uint8_t code)
 
 uint16_t CPU::getRegisterPair2(uint8_t code)
 {
-	return 0;
 	if(code < 3)
 		return ((_register[code*2]<<8) + _register[code*2+1]);
 

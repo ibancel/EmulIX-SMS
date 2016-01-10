@@ -33,8 +33,10 @@ int main()
 	//rom.readFromFile("ROMS/Sonic the Hedgehog.sms");
 	//rom.readFromFile("ROMS/zexall.sms");
 
-	Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
-	Log::exitOnWarning = false;
+	//Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
+	Log::typeMin = Log::ALL;
+	Log::exitOnWarning = true;
+	Log::exitOnError = false;
 
 
 	//sf::sleep(sf::Time(20));

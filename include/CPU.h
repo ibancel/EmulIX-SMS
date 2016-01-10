@@ -16,7 +16,9 @@ struct resInstruction
 	bool IDExist = false;
 };
 
-enum R_NAME { R_B = 0, R_C = 1, R_D = 2, R_E = 3, R_H = 4, R_L = 5, R_HL = 6, R_A = 7 };
+enum R_NAME { R_B = 0, R_C = 1, R_D = 2, R_E = 3, R_H = 4, R_L = 5, R_A = 7 };
+enum RP_NAME { RP_BC = 0, RP_DE = 1, RP_HL = 2, RP_SP = 3 };
+enum RP2_NAME { RP2_BC = 0, RP2_DE = 1, RP2_HL = 2, RP2_AF = 3 };
 enum F_NAME { F_C = 0, F_N = 1, F_P = 2, F_F3 = 3, F_H = 4, F_F5 = 5, F_Z = 6, F_S = 7 };
 
 class CPU
@@ -31,7 +33,7 @@ public:
 	void aluOperation(uint8_t index, uint8_t value);
 
 	// rw = true for write and false for read
-	void portCommunication(bool rw, uint8_t address, uint16_t data);
+	uint8_t portCommunication(bool rw, uint8_t address, uint8_t data = 0);
 
 private:
 	Memory *_memory;
@@ -53,6 +55,8 @@ private:
 	void opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 
 	bool condition(uint8_t code);
+
+	void bliOperation(uint8_t x, uint8_t y);
 
 	// set:
 	void setRegisterPair(uint8_t code, uint16_t value);
