@@ -18,7 +18,7 @@
 
 using namespace std;
 
-/// TODO classe mÃ¨re pour les pÃ©riphÃ©riques
+/// TODO classe mère pour les périphériques
 
 int main()
 {

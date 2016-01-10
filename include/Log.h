@@ -5,6 +5,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <cstdlib>
 
 #include "definitions.h"
 

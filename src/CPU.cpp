@@ -23,12 +23,12 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	/// vv A ENLEVER vv
 	_memory->init();
 
-	ifstream fichier("ROMS/zexall.sms");
-	//ifstream fichier("ROMS/Trans-Bot (UE).sms");
-	//ifstream fichier("ROMS/Astro Flash (J) [!].sms");
-	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms");
-	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms");
-	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms");
+	ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms", ios_base::in | ios_base::binary);
 
 	if(!fichier) exit(EXIT_FAILURE);
 
@@ -40,22 +40,16 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 		fichier.read(&h, sizeof(char));
 		val = static_cast<uint8_t>(h);
 		//cout << hex << (unsigned int)val << " ";
+		//cout << hex << compteur << " : " << (unsigned int)val << endl;
 
 		if(!fichier.good())
 		{
-			break;
 			fichier.close();
+			break;
 		}
 
 		_memory->write(compteur++, val);
 	}
-	/*
-	_memory[0] = 0b00111110;
-	_memory[1] = 0x23;
-	_memory[2] = 0b11000110;
-	_memory[3] = 0x13;
-	_memory[4] = 0b11000110;
-	_memory[5] = 0x42;*/
 	/// ^^ A ENLEVER ^^
 }
 
@@ -81,8 +75,8 @@ void CPU::cycle()
 
 resInstruction CPU::opcodeExecution(uint8_t prefix, uint8_t opcode)
 {
-	/// TODO: Ã  prendre en compte les changements pour ALU
-	/// TODO: gÃ©rer les interruptions
+	/// TODO: à prendre en compte les changements pour ALU
+	/// TODO: gérer les interruptions
 
 	slog << ldebug << hex <<  "#" << (uint16_t)(_pc-1) << " : " << (uint16_t) opcode;
 	if(prefix != 0)
@@ -164,7 +158,7 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 	}
 	else if(index == 7) // CP
 	{
-		/// TODO vÃ©rifier borrows & overflow
+		/// TODO vérifier borrows & overflow
 		uint8_t sum = _register[R_A] - value;
 		setFlagBit(F_S, ((int8_t)(sum) < 0));
 		setFlagBit(F_Z, (sum == 0));
