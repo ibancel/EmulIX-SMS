@@ -5,6 +5,7 @@
 
 #include "Memory.h"
 #include "Log.h"
+#include "Stats.h"
 
 class Graphics
 {
@@ -38,6 +39,11 @@ private:
 
 	uint8_t _controlByte;
 	uint16_t _controlCmd;
+
+	// SFML
+	sf::Font font;
+	sf::Clock clock;
+	int timeCycle;
 
 
 	void loadDrawImage();

@@ -8,7 +8,9 @@
 
 #include "Memory.h"
 #include "Graphics.h"
+#include "Audio.h"
 #include "Cartridge.h"
+#include "Stats.h"
 
 struct resInstruction
 {
@@ -39,33 +41,44 @@ private:
 	Memory *_memory;
 	Graphics *_graphics;
 	Cartridge *_cartridge;
+	Audio *_audio;
 
 	uint16_t _pc;
 	uint16_t _sp;
 	uint8_t _stack[MEMORY_SIZE]; // size unkown so very large size !
 
 	uint8_t _register[REGISTER_SIZE];
+	uint8_t _registerA[REGISTER_SIZE]; // alternate
 	uint8_t _registerFlag;
+	uint8_t _registerFlagA;
+
+	uint8_t _modeInt;
 
 
 	inline bool isPrefixByte(uint8_t byte);
 
 	void opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 	void opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	void opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 	void opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 
 	bool condition(uint8_t code);
 
 	void bliOperation(uint8_t x, uint8_t y);
 
+	// swaps:
+	void swapRegister(uint8_t code);
+	void swapRegisterPair(uint8_t code);
+	void swapRegisterPair2(uint8_t code);
+
 	// set:
-	void setRegisterPair(uint8_t code, uint16_t value);
-	void setRegisterPair2(uint8_t code, uint16_t value);
+	void setRegisterPair(uint8_t code, uint16_t value, bool alternate = false);
+	void setRegisterPair2(uint8_t code, uint16_t value, bool alternate = false);
 	void setFlagBit(F_NAME f, uint8_t value);
 
 	// get:
-	uint16_t getRegisterPair(uint8_t code);
-	uint16_t getRegisterPair2(uint8_t code);
+	uint16_t getRegisterPair(uint8_t code, bool alternate = false);
+	uint16_t getRegisterPair2(uint8_t code, bool alternate = false);
 	bool getFlagBit(F_NAME f);
 
 

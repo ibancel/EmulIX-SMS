@@ -22,9 +22,14 @@ using namespace std;
 
 int main()
 {
-	Graphics::ratioSize = 2.f;
+	Graphics::ratioSize = 2.0f;
 
-	sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "EmulIX - MasterSystem");
+	//Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
+	Log::typeMin = Log::ALL;
+	Log::exitOnWarning = true;
+	//Log::exitOnError = false;
+
+	sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "Emul - MasterSystem");
 	Inputs inputs;
 	Cartridge rom;
 	Memory mem;
@@ -33,10 +38,8 @@ int main()
 	//rom.readFromFile("ROMS/Sonic the Hedgehog.sms");
 	//rom.readFromFile("ROMS/zexall.sms");
 
-	//Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
-	Log::typeMin = Log::ALL;
-	Log::exitOnWarning = true;
-	Log::exitOnError = false;
+	/*for(int i = 0 ; i < 260 ; i++)
+      cout << hex << i << " : " << getOpcodeName(i) << endl;*/
 
 
 	//sf::sleep(sf::Time(20));

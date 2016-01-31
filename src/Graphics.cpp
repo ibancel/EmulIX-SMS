@@ -3,7 +3,7 @@
 using namespace std;
 
 
-float Graphics::ratioSize = 1.5f;
+float Graphics::ratioSize = 2.0f;
 
 Graphics::Graphics(Memory *m, sf::RenderWindow *app)
 {
@@ -21,16 +21,37 @@ Graphics::Graphics(Memory *m, sf::RenderWindow *app)
 	for(int i = 0 ; i < GRAPHIC_REGISTER_SIZE ; i++)
 		_register[i] = 0;
 
+   if(!font.loadFromFile("data/LiberationSans-Regular.ttf"))
+   {
+      cerr << "Cannot open the font !" << endl;
+   }
+
+   timeCycle = 0;
+
 	//_drawImage.loadFromFile("lena.jpg");
 }
 
 void Graphics::draw()
 {
-	loadDrawImage();
+   sf::Text text;
+   text.setFont(font);
+
+   text.setCharacterSize(24);
+   text.setColor(sf::Color::Blue);
+   sf::Time elapsed = clock.restart();
+   timeCycle = timeCycle*90.f/100.f + 10.f/100.f*(1000000.0f/(float)elapsed.asMicroseconds());
+   std::ostringstream ss;
+   int *most = Stats::getMost();
+   ss << timeCycle << endl << "mode: " << (uint16_t)_mode << endl << "most used : " << endl << "\t" << getOpcodeName(most[0]) << " - " << Stats::opcodeOccur[most[0]] << endl << "\t" << getOpcodeName(most[1]) << " - " << Stats::opcodeOccur[most[1]] << endl << "\t" << getOpcodeName(most[2]) << " - " << Stats::opcodeOccur[most[2]] << endl << "\t" << getOpcodeName(most[3]) << " - " << Stats::opcodeOccur[most[3]] << endl << "\t" << getOpcodeName(most[4]) << " - " << Stats::opcodeOccur[most[4]] << endl << "\t" << getOpcodeName(most[5]) << " - " << Stats::opcodeOccur[most[5]] << endl << "\t" << getOpcodeName(most[6]) << " - " << Stats::opcodeOccur[most[6]] << endl << "\t" << getOpcodeName(most[7]) << " - " << Stats::opcodeOccur[most[7]] << endl << "\t" << getOpcodeName(most[8]) << " - " << Stats::opcodeOccur[most[8]];
+   text.setString(ss.str());
+
+	/*loadDrawImage();
 
 	_tex.loadFromImage(_drawImage);
 	sf::Sprite sp(_tex);
-	_app->draw(sp);
+
+	_app->draw(sp);*/
+	_app->draw(text);
 }
 
 uint8_t Graphics::read(uint8_t port)
@@ -43,17 +64,14 @@ uint8_t Graphics::read(uint8_t port)
 
 uint8_t Graphics::write(uint8_t port, uint8_t data)
 {
-	if(port == 0x7E || port == 0x7F) // SN76489 data
-	{
-
-	}
-	else if(port == 0xBE) // data port
+	if(port == 0xBE) // data port
 	{
 		if(_codeRegister == 3)
 			_cram[_address] = data;
 		else // code == 0,1,2
 			_vram[_address] = data;
 		_address++;
+		_address %= 0x4000;
 	}
 	else if(port == 0xBF) // control port
 	{
@@ -101,6 +119,13 @@ uint8_t Graphics::controlAction()
 	{
 
 	}
+
+	if(!getBit8(_register[0], 1) && !getBit8(_register[1],3) && getBit8(_register[1],4))
+		_mode = 1;
+	else if(getBit8(_register[0], 1) && !getBit8(_register[1],3) && !getBit8(_register[1],4))
+		_mode = 2;
+	else if(!getBit8(_register[0], 1) && getBit8(_register[1],3) && !getBit8(_register[1],4))
+		_mode = 3;
 }
 
 
@@ -118,7 +143,7 @@ void Graphics::loadDrawImage()
 	{
 		for(int j = 0 ; j < height ; j++)
 		{
-			_drawImage.setPixel(i,j, sf::Color(0,0,0));
+			_drawImage.setPixel(i,j, sf::Color(255,0,0));
 		}
 	}
 	//_drawImage.loadFromMemory(pixels, 8*GRAPHIC_WIDTH*GRAPHIC_HEIGHT*4);
