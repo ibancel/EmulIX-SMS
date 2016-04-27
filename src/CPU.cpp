@@ -30,9 +30,9 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	_memory->init();
 
 	//ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
-	ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
+	ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Black Onyx, The (SG-1000) [!].sg", ios_base::in | ios_base::binary);
@@ -151,7 +151,7 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 		setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
 		setFlagBit(F_Z, (_register[R_A] == 0));
 		setFlagBit(F_H, 0);
-		setFlagBit(F_P, ((_register[R_A]&1) == 0));
+		setFlagBit(F_P, nbBitsEven(_register[R_A]));
 		setFlagBit(F_N, 0);
 		setFlagBit(F_C, 0);
 		setFlagBit(F_F3, (_register[R_A]>>2)&1);
@@ -187,6 +187,29 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 	//
 	else
 		slog << lwarning << "ALU " << (uint16_t)index << " is not implemented" << endl;
+}
+
+void CPU::rotOperation(uint8_t index, uint8_t reg)
+{
+	if(index == 0) // RLC
+	{
+		/// TODO
+	}
+	//
+	else if(index == 4) // SLA
+	{
+		uint8_t val = (uint8_t)(_register[reg] << 1);
+		setFlagBit(F_S, ((int8_t)(val) < 0));
+		setFlagBit(F_Z, (val == 0));
+		setFlagBit(F_H, 0);
+		setFlagBit(F_P, nbBitsEven(val));
+		setFlagBit(F_N, 0);
+		setFlagBit(F_C, (_register[reg]>>7)&1);
+		_register[reg] = val;
+	}
+	//
+	else
+		slog << lwarning << "ROT " << (uint16_t)index << " is not implemented" << endl;
 }
 
 uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
@@ -500,10 +523,11 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 
 void CPU::opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 {
-	if(false)
+	if(x == 0) // rot[y] r[z]
 	{
-
+		rotOperation(y,z);
 	}
+	//
 	else
 	{
 		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (CB) is not implemented" << endl;

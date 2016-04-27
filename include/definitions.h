@@ -63,4 +63,8 @@ std::string getOpcodeName(uint8_t opcode);
 // pos from 0 to 7
 uint8_t getBit8(uint8_t value, uint8_t pos);
 
+
+// count of bits is even or odd ? (true=even)
+bool nbBitsEven(uint8_t byte);
+
 #endif

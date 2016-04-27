@@ -33,6 +33,7 @@ public:
 	resInstruction opcodeExecution(uint8_t prefix, uint8_t opcode);
 
 	void aluOperation(uint8_t index, uint8_t value);
+	void rotOperation(uint8_t index, uint8_t reg);
 
 	// rw = true for write and false for read
 	uint8_t portCommunication(bool rw, uint8_t address, uint8_t data = 0);

@@ -10,3 +10,11 @@ uint8_t getBit8(uint8_t value, uint8_t pos)
 {
 	return (value >> pos) & 0b1;
 }
+
+bool nbBitsEven(uint8_t byte)
+{
+	byte ^= byte >> 4;
+	byte ^= byte >> 2;
+	byte ^= byte >> 1;
+	return (~byte) & 1;
+}
