@@ -2,6 +2,8 @@
 
 using namespace std;
 
+bool Audio::soundActive = false;
+
 Audio::Audio()
 {
 	// initialisation
@@ -94,6 +96,8 @@ void Audio::run()
 
 void Audio::playSound(uint8_t indice)
 {
+   if(!soundActive) return;
+
 	sf::Int16 raw[44100];
 	const double TWO_PI = 6.28318;
 	double x = 0;

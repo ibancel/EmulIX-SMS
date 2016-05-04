@@ -13,6 +13,8 @@ class Audio
 {
 
 public:
+   static bool soundActive;
+
 	Audio();
 
 	uint8_t read(uint8_t port);

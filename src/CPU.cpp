@@ -30,9 +30,9 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	_memory->init();
 
 	//ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
-	ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
+	ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Black Onyx, The (SG-1000) [!].sg", ios_base::in | ios_base::binary);
