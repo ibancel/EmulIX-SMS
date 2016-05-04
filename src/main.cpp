@@ -18,31 +18,31 @@
 
 using namespace std;
 
-/// TODO classe mère pour les périphériques
+/// TODO classe mÃ¨re pour les pÃ©riphÃ©riques
 
 int main()
 {
-	Graphics::ratioSize = 2.0f;
+    Graphics::ratioSize = 2.0f;
 
-	//Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
-	Log::typeMin = Log::ALL;
-	Log::exitOnWarning = true;
-	//Log::exitOnError = false;
+    //Log::typeMin = Log::ALL /*& (~Log::DEBUG)*/;
+    Log::typeMin = Log::ALL;
+    Log::exitOnWarning = true;
+    //Log::exitOnError = false;
 
-	sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "Emul - MasterSystem");
-	Inputs inputs;
-	Cartridge rom;
-	Memory mem;
-	Graphics g(&mem, &window);
-	CPU cpu(&mem, &g, &rom);
-	//rom.readFromFile("ROMS/Sonic the Hedgehog.sms");
-	//rom.readFromFile("ROMS/zexall.sms");
+    sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "Emul - MasterSystem");
+    Inputs inputs;
+    Cartridge rom;
+    Memory mem;
+    Graphics g(&mem, &window);
+    CPU cpu(&mem, &g, &rom);
+    //rom.readFromFile("ROMS/Sonic the Hedgehog.sms");
+    //rom.readFromFile("ROMS/zexall.sms");
 
-	/*for(int i = 0 ; i < 260 ; i++)
-      cout << hex << i << " : " << getOpcodeName(i) << endl;*/
+    /*for(int i = 0 ; i < 260 ; i++)
+    cout << hex << i << " : " << getOpcodeName(i) << endl;*/
 
 
-	//sf::sleep(sf::Time(20));
+    //sf::sleep(sf::Time(20));
 
     while (window.isOpen())
     {
@@ -50,7 +50,8 @@ int main()
 
         window.clear(sf::Color::Black);
 
-        cpu.cycle();
+        if(!systemPaused)
+            cpu.cycle();
 
         g.draw();
 

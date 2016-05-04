@@ -14,6 +14,8 @@
 #define GRAPHIC_VRAM_SIZE 16384
 #define GRAPHIC_REGISTER_SIZE 16
 
+extern bool systemPaused;
+
 
 const std::string OPCODE_NAME[] = {
 

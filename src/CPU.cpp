@@ -1,5 +1,6 @@
 #include <fstream>
 #include <string>
+#include <unistd.h>
 
 #include "CPU.h"
 
@@ -16,6 +17,8 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	_sp = 0xFDD0;
 
 	_modeInt = 0;
+	_IFF1 = false;
+	_IFF2 = false;
 
 	for(int i = 0 ; i < REGISTER_SIZE ; i++)
 		_register[i] = 0;
@@ -61,6 +64,16 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	/// ^^ A ENLEVER ^^
 }
 
+void CPU::reset()
+{
+    _IFF1 = false;
+    _IFF2 = false;
+    _pc = 0;
+    _registerI = 0;
+    _registerR = 0;
+    _modeInt = 0;
+}
+
 void CPU::cycle()
 {
 	//while(true)
@@ -78,6 +91,8 @@ void CPU::cycle()
 		opcodeExecution(prefix, opcode);
 
 		_audio->run(); // to put in main loop
+
+		//usleep(500 * 1000);
 
 		if(_pc > 0x8000) exit(8);
 	}
@@ -463,8 +478,8 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	//
 	else if(x == 3 && z == 3 && y == 6) // DI
 	{
-		/// TODO interrupts
-		slog << ldebug << "-- TODO DI" << endl;
+		_IFF1 = false;
+		_IFF2 = false;
 	}
 	//
 	else if(x == 3 && z == 4) // CALL cc[y],nn
@@ -578,8 +593,6 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	//
 	else if(x == 1 && z == 6) // IM im[y]
 	{
-		/// TODO
-
 		if(y == 0)
 			_modeInt = 0;
 		else if(y == 2)
@@ -587,7 +600,7 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		else if(_modeInt == 3)
 			_modeInt = 2;
 
-		slog << ldebug << "-- TODO IM" << endl;
+		interrupt();
 	}
 	//
 	else if(x == 2 && (z > 3 || y < 4)) // NONI & NOP
@@ -654,6 +667,22 @@ void CPU::bliOperation(uint8_t x, uint8_t y)
 	{
 		slog << lwarning << hex << "BLI (" << (uint16_t)x << ", " << (uint16_t)y << ") is not implemented !" << endl;
 	}
+}
+
+void CPU::interrupt(bool nonMaskable)
+{
+    if(!_IFF1) return;
+
+    if(_modeInt == 0) {
+        slog << ldebug << "TODO interrupt mode 0" << endl;
+     }
+     else if(_modeInt == 1) {
+        reset();
+        _pc = 0x38;
+    }
+    else if(_modeInt == 2) {
+         slog << ldebug << "TODO interrupt mode 2" << endl;
+    }
 }
 
 

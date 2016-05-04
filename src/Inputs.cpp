@@ -18,6 +18,8 @@ void Inputs::captureEvents(sf::RenderWindow *app)
 		{
 			if(event.key.code == sf::Keyboard::Escape)
 				app->close();
+         else if(event.key.code == sf::Keyboard::Space)
+            systemPaused = !systemPaused;
 		}
 	}
 }

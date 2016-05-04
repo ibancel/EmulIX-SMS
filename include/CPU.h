@@ -29,6 +29,8 @@ class CPU
 public:
 	CPU(Memory *m, Graphics *g, Cartridge *c);
 
+	void reset();
+
 	void cycle();
 	resInstruction opcodeExecution(uint8_t prefix, uint8_t opcode);
 
@@ -44,8 +46,11 @@ private:
 	Cartridge *_cartridge;
 	Audio *_audio;
 
+    // special registers
 	uint16_t _pc;
 	uint16_t _sp;
+	uint16_t _registerI;
+	uint16_t _registerR;
 	uint8_t _stack[MEMORY_SIZE]; // size unkown so very large size !
 
 	uint8_t _register[REGISTER_SIZE];
@@ -54,6 +59,9 @@ private:
 	uint8_t _registerFlagA;
 
 	uint8_t _modeInt;
+
+	bool _IFF1; // Interrupt flip-flop
+	bool _IFF2; // Interrupt flip-flop
 
 
 	inline bool isPrefixByte(uint8_t byte);
@@ -66,6 +74,8 @@ private:
 	bool condition(uint8_t code);
 
 	void bliOperation(uint8_t x, uint8_t y);
+
+	void interrupt(bool nonMaskable = false);
 
 	// swaps:
 	void swapRegister(uint8_t code);
