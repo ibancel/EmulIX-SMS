@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <cstdlib>
+#include <fstream>
 
 #include "definitions.h"
 
@@ -15,7 +16,7 @@ class Log : public std::ostream
 public:
 	enum type { NORMAL = 0b1, DEBUG = 0b10, WARNING = 0b100, ERROR = 0b1000, ALL = 0b1111 };
 
-	Log() : std::ostream(&_buffer), _buffer(std::cout) { _currentType = type::NORMAL; };
+	Log(std::string logPath = "log.txt") : std::ostream(&_buffer), _buffer(std::cout, logPath) { _currentType = type::NORMAL; };
 
 	static bool printConsole;
 	static int typeMin;
@@ -28,7 +29,11 @@ public:
 	class LogBuffer : public std::stringbuf
 	{
 	public:
-		LogBuffer(std::ostream& str) : _output(str) { _type = type::NORMAL;};
+		LogBuffer(std::ostream& str, std::string logPath) : _output(str)
+		{
+            _type = type::NORMAL;
+            _outFile.open(logPath);
+        };
 
 		virtual int sync ( )
 		{
@@ -44,7 +49,11 @@ public:
 			else if(!Log::isUniqueType(typeMin) && (oldType & typeMin) == 0) return 0;
 
 			_output << "[Log]" << strAdd;
-			if(strAdd[strAdd.size()-1] != '\n') _output << std::endl;
+			_outFile << strAdd;
+			if(strAdd[strAdd.size()-1] != '\n') {
+                _output << std::endl;
+                _outFile << std::endl;
+            }
 
 			_output.flush();
 
@@ -66,6 +75,7 @@ public:
 
 	private:
 		std::ostream& _output;
+		std::ofstream _outFile;
 		Log::type _type;
 	};
 

@@ -1,6 +1,7 @@
 Emulator-SMS.cbp
 Emulator-SMS.depend
 Emulator-SMS.layout
+log.txt
 
 bin/*
 docs/*
