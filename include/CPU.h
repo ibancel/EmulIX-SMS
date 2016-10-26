@@ -11,6 +11,7 @@
 #include "Audio.h"
 #include "Cartridge.h"
 #include "Stats.h"
+#include "Singleton.h"
 
 struct resInstruction
 {
@@ -23,12 +24,17 @@ enum RP_NAME { RP_BC = 0, RP_DE = 1, RP_HL = 2, RP_SP = 3 };
 enum RP2_NAME { RP2_BC = 0, RP2_DE = 1, RP2_HL = 2, RP2_AF = 3 };
 enum F_NAME { F_C = 0, F_N = 1, F_P = 2, F_F3 = 3, F_H = 4, F_F5 = 5, F_Z = 6, F_S = 7 };
 
-class CPU
+class Graphics;
+
+class CPU : public Singleton<CPU>
 {
 
 public:
+
+	CPU();
 	CPU(Memory *m, Graphics *g, Cartridge *c);
 
+	void init();
 	void reset();
 
 	void cycle();
@@ -39,6 +45,12 @@ public:
 
 	// rw = true for write and false for read
 	uint8_t portCommunication(bool rw, uint8_t address, uint8_t data = 0);
+
+
+	//** GET **//
+
+	uint16_t getProgramCounter() const;
+	uint8_t getRegisterFlag() const;
 
 private:
 	Memory *_memory;

@@ -1,6 +1,7 @@
 #include "definitions.h"
 
 bool systemPaused = false;
+bool systemStepCalled = false;
 
 std::string getOpcodeName(uint8_t opcode)
 {
@@ -11,6 +12,16 @@ std::string getOpcodeName(uint8_t opcode)
 uint8_t getBit8(uint8_t value, uint8_t pos)
 {
 	return (value >> pos) & 0b1;
+}
+
+uint8_t setBit8(uint8_t value, uint8_t pos, uint8_t newBit)
+{
+	if(newBit == 0)
+		value &= ~(1 << (uint8_t)pos);
+	else
+		value |= 1 << (uint8_t)pos;
+
+	return value;
 }
 
 bool nbBitsEven(uint8_t byte)

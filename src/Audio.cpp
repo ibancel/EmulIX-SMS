@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "Audio.h"
 
 using namespace std;

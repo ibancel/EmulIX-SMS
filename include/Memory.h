@@ -4,9 +4,10 @@
 #include <stdint.h>
 
 #include "definitions.h"
+#include "Singleton.h"
 
 
-class Memory
+class Memory : public Singleton<Memory>
 {
 
 public:

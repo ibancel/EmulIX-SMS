@@ -6,11 +6,22 @@
 
 using namespace std;
 
+
+CPU::CPU()
+{
+	init();
+}
+
 CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 {
-	_memory = m;
-	_graphics = g;
-	_cartridge = c;
+	init();
+}
+
+void CPU::init()
+{
+	_memory = Memory::instance();
+	_graphics = Graphics::instance();
+	_cartridge = Cartridge::instance();
 	_audio = new Audio(); // for the moment !
 
 	_pc = 0x00; // reset (at $0000), IRQs (at $0038) and NMIs (at $0066)
@@ -21,27 +32,35 @@ CPU::CPU(Memory *m, Graphics *g, Cartridge *c)
 	_IFF2 = false;
 
 	for(int i = 0 ; i < REGISTER_SIZE ; i++)
-		_register[i] = 0;
+		_register[i] = 0xFF;
 
 	for(int i = 0 ; i < REGISTER_SIZE ; i++)
-		_registerA[i] = 0;
+		_registerA[i] = 0xFF;
 
 	for(int i = 0 ; i < MEMORY_SIZE ; i++)
 		_stack[i] = 0;
 
+	_registerFlag = 0xFF;
+	_registerFlagA = 0xFF;
+
 	/// vv A ENLEVER vv
 	_memory->init();
 
-	//ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
+	ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
-	ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Black Onyx, The (SG-1000) [!].sg", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Championship Golf (SG-1000).sg", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Elevator Action (SG-1000) [!].sg", ios_base::in | ios_base::binary);
 
 
-	if(!fichier) exit(EXIT_FAILURE);
+	if(!fichier) {
+		slog << lerror << "ROM loading failed." << endl;
+		exit(EXIT_FAILURE);
+	}
 
 	char h;
 	uint8_t val;
@@ -72,12 +91,26 @@ void CPU::reset()
     _registerI = 0;
     _registerR = 0;
     _modeInt = 0;
+    _registerFlag = 0xFF;
 }
 
 void CPU::cycle()
 {
+	if(STEP_BY_STEP && !systemStepCalled)
+		return;
+
 	//while(true)
 	{
+		// TODO: for the moment
+		if(_graphics->getIE()) {
+			_stack[--_sp] = (_pc >> 8);
+			_stack[--_sp] = (_pc & 0xFF);
+			_pc = 0x38;
+		}
+
+		slog << ldebug << "HL: " << getRegisterPair(RP_HL) << endl;
+		slog << ldebug << "Stack: " << (uint16_t)_stack[_sp] << ", " << (uint16_t)_stack[_sp+1] << endl;
+
 		uint8_t prefix = _memory->read(_pc++);
 		uint8_t opcode = prefix;
 
@@ -96,12 +129,14 @@ void CPU::cycle()
 
 		if(_pc > 0x8000) exit(8);
 	}
+
+	systemStepCalled = false;
 }
 
 resInstruction CPU::opcodeExecution(uint8_t prefix, uint8_t opcode)
 {
-	/// TODO: à prendre en compte les changements pour ALU
-	/// TODO: gérer les interruptions
+	/// TODO: Ã  prendre en compte les changements pour ALU
+	/// TODO: gÃ©rer les interruptions
 
 	slog << ldebug << hex <<  "#" << (uint16_t)(_pc-1) << " : " << (uint16_t) opcode;
 	if(prefix != 0)
@@ -186,7 +221,7 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 	}
 	else if(index == 7) // CP
 	{
-		/// TODO vérifier borrows & overflow
+		/// TODO vÃ©rifier borrows & overflow
 		uint8_t sum = _register[R_A] - value;
 		setFlagBit(F_S, ((int8_t)(sum) < 0));
 		setFlagBit(F_Z, (sum == 0));
@@ -258,6 +293,17 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 }
 
 
+uint16_t CPU::getProgramCounter() const
+{
+	return _pc;
+}
+
+uint8_t CPU::getRegisterFlag() const
+{
+	return _registerFlag;
+}
+
+
 /// PRIVATE :
 
 bool CPU::isPrefixByte(uint8_t byte)
@@ -289,6 +335,7 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	}
 	else if(x == 0 && z == 0 && y >= 4) // JR cc[y-4],d
 	{
+		slog << ldebug << "=> Condition " << y-4 << " : " << condition(y-4) << " (d=" << hex << (int16_t)_memory->read(_pc) << ")" << endl;
 		if(condition(y-4))
 			_pc += (int8_t)_memory->read(_pc) + 1;
 	}
@@ -436,6 +483,11 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		swapRegisterPair(RP_HL);
 	}
 	//
+	else if(x == 3 && z == 1 && q == 1 && p == 3) // LD SP, HL
+	{
+		_sp = getRegisterPair(RP_HL);
+		slog << ldebug << hex << "SP: " << _sp << endl;
+	}
 	else if(x == 3 && z == 2) // JP cc[y],nn
 	{
 		uint16_t addr = _memory->read(_pc++);
@@ -589,6 +641,16 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		setFlagBit(F_F5, (result>>4)&1);
 
 		_register[R_A] = result;
+	}
+	//
+	else if(x == 1 && z == 5 && y != 1) // RETN
+	{
+		// TODO: verify
+		_IFF1 = _IFF2;
+
+		_pc = _stack[_sp++];
+		_pc += (_stack[_sp++]<<8);
+		slog << lerror << "PC: " << _pc << endl;
 	}
 	//
 	else if(x == 1 && z == 6) // IM im[y]
@@ -793,6 +855,7 @@ void CPU::setFlagBit(F_NAME f, uint8_t value)
 
 uint16_t CPU::getRegisterPair(uint8_t code, bool alternate)
 {
+	// TODO verify HL
 	uint8_t* r = _register;
 	if(alternate)
 		r = _registerA;

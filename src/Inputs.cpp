@@ -16,10 +16,15 @@ void Inputs::captureEvents(sf::RenderWindow *app)
 			app->close();
 		if(event.type == sf::Event::KeyReleased)
 		{
-			if(event.key.code == sf::Keyboard::Escape)
+			if(event.key.code == sf::Keyboard::Escape) {
 				app->close();
-         else if(event.key.code == sf::Keyboard::Space)
-            systemPaused = !systemPaused;
+			}
+			else if(event.key.code == sf::Keyboard::Space) {
+				if(!STEP_BY_STEP)
+					systemPaused = !systemPaused;
+				else
+					systemStepCalled = true;
+			}
 		}
 	}
 }

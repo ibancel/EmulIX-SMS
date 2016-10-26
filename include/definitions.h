@@ -4,6 +4,9 @@
 #include <iostream>
 
 #define DEBUG_MODE true
+#define STEP_BY_STEP false
+
+#define BREAKPOINT_STYLE 1 // 0 for before execution, 1 for after
 
 #define MEMORY_SIZE 65536
 #define REGISTER_SIZE 8
@@ -12,12 +15,15 @@
 #define GRAPHIC_WIDTH 256
 #define GRAPHIC_HEIGHT 240
 #define GRAPHIC_VRAM_SIZE 16384
-#define GRAPHIC_REGISTER_SIZE 16
+#define GRAPHIC_REGISTER_SIZE 8
 
 extern bool systemPaused;
+extern bool systemStepCalled;
 
 
 const std::string OPCODE_NAME[] = {
+
+	/// Important TODO: wrong name for p / q values
 
    // x = 0
    "NOP", "EX AF, AF'", "DJNZ d", "JR d", "JR cc[y-4],d", "JR cc[y-4],d", "JR cc[y-4],d", "JR cc[y-4],d",
@@ -62,8 +68,13 @@ const std::string OPCODE_NAME[] = {
 
 std::string getOpcodeName(uint8_t opcode);
 
-// pos from 0 to 7
+// pos from 0 to 7 (with 7 MSB)
 uint8_t getBit8(uint8_t value, uint8_t pos);
+
+// pos from 0 to 7 (with 7 MSB)
+// newBit 0 or 1
+// return the byte modified
+uint8_t setBit8(uint8_t value, uint8_t pos, uint8_t newBit);
 
 
 // count of bits is even or odd ? (true=even)

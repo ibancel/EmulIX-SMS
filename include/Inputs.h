@@ -5,8 +5,9 @@
 #include <SFML/Graphics.hpp>
 
 #include "definitions.h"
+#include "Singleton.h"
 
-class Inputs
+class Inputs : public Singleton<Inputs>
 {
 
 public:

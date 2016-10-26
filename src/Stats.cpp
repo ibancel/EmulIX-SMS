@@ -15,7 +15,7 @@ void Stats::add(uint8_t prefix, uint8_t opcode)
 int* Stats::getMost()
 {
 	int arrayCpy[256];
-	int res[256] = { 0 };
+	int *res = new int[256];
 
 	for(int i = 0 ; i < 256 ; i++)
 		arrayCpy[i] = Stats::opcodeOccur[i];

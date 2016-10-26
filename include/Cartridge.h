@@ -5,8 +5,9 @@
 #include <vector>
 
 #include "Memory.h"
+#include "Singleton.h"
 
-class Cartridge
+class Cartridge : public Singleton<Cartridge>
 {
 
 public:
