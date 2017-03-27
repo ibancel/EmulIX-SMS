@@ -109,7 +109,7 @@ void CPU::cycle()
 		}
 
 		slog << ldebug << "HL: " << getRegisterPair(RP_HL) << endl;
-		slog << ldebug << "Stack: " << (uint16_t)_stack[_sp] << ", " << (uint16_t)_stack[_sp+1] << endl;
+		slog << ldebug << "Stack: " << (uint16_t)_stack[_sp+1] << "," << (uint16_t)_stack[_sp] << endl;
 
 		uint8_t prefix = _memory->read(_pc++);
 		uint8_t opcode = prefix;
