@@ -66,15 +66,17 @@ const std::string OPCODE_NAME[] = {
    "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8",
 };
 
-std::string getOpcodeName(uint8_t opcode);
+const std::string OPCODECB_NAME[] = { "rot[y] r[z]", "BIT y, r[z]", "RES y, r[z]", "SET y, r[z]" };
+
+std::string getOpcodeName(uint8_t prefix, uint8_t opcode);
 
 // pos from 0 to 7 (with 7 MSB)
 uint8_t getBit8(uint8_t value, uint8_t pos);
 
+// value is the variable that will be changed
 // pos from 0 to 7 (with 7 MSB)
-// newBit 0 or 1
-// return the byte modified
-uint8_t setBit8(uint8_t value, uint8_t pos, uint8_t newBit);
+// newBit can be 0 or 1 else can be true or false
+void setBit8(uint8_t* value, uint8_t pos, bool newBit);
 
 
 // count of bits is even or odd ? (true=even)

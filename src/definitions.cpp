@@ -3,10 +3,14 @@
 bool systemPaused = false;
 bool systemStepCalled = false;
 
-std::string getOpcodeName(uint8_t opcode)
+std::string getOpcodeName(uint8_t prefix, uint8_t opcode)
 {
-   uint8_t value = (opcode & 0b11000000) + ((opcode & 0b00111000) >> 3) + ((opcode & 0b00000111) << 3);
-   return OPCODE_NAME[value];
+    if(prefix == 0xCB) {
+        return OPCODECB_NAME[ ((opcode & 0b11000000) >>6) ];
+    }
+    // else:
+    uint8_t value = (opcode & 0b11000000) + ((opcode & 0b00111000) >> 3) + ((opcode & 0b00000111) << 3);
+    return OPCODE_NAME[value];
 }
 
 uint8_t getBit8(uint8_t value, uint8_t pos)
@@ -14,14 +18,13 @@ uint8_t getBit8(uint8_t value, uint8_t pos)
 	return (value >> pos) & 0b1;
 }
 
-uint8_t setBit8(uint8_t value, uint8_t pos, uint8_t newBit)
+void setBit8(uint8_t* value, uint8_t pos, bool newBit)
 {
-	if(newBit == 0)
-		value &= ~(1 << (uint8_t)pos);
+	//*value = copySetBit8(*value, pos, newBit);
+	if(!newBit)
+		*value &= ~(1 << (uint8_t)pos);
 	else
-		value |= 1 << (uint8_t)pos;
-
-	return value;
+		*value |= 1 << (uint8_t)pos;
 }
 
 bool nbBitsEven(uint8_t byte)

@@ -23,6 +23,7 @@ void CPU::init()
 	_graphics = Graphics::instance();
 	_cartridge = Cartridge::instance();
 	_audio = new Audio(); // for the moment !
+	_inputs = Inputs::instance();
 
 	_pc = 0x00; // reset (at $0000), IRQs (at $0038) and NMIs (at $0066)
 	_sp = 0xFDD0;
@@ -46,7 +47,14 @@ void CPU::init()
 	/// vv A ENLEVER vv
 	_memory->init();
 
-	ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Monaco GP (SG-1000).sg", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Borderline (SG-1000).sg", ios_base::in | ios_base::binary);
+	ifstream fichier("ROMS/Bomb Jack (SG-1000).sg", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Snail Music Demo (PD).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/Only Words by Mike Gordon (PD).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/64 Color Palette Test (PD).sms", ios_base::in | ios_base::binary);
+	//ifstream fichier("ROMS/V Counter Test by Charles MacDonald (PD).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
 	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
@@ -141,7 +149,7 @@ resInstruction CPU::opcodeExecution(uint8_t prefix, uint8_t opcode)
 	slog << ldebug << hex <<  "#" << (uint16_t)(_pc-1) << " : " << (uint16_t) opcode;
 	if(prefix != 0)
 			slog << "(" << (uint16_t)prefix << ")";
-	slog << " --" << getOpcodeName(opcode) << "--" << endl;
+	slog << " --" << getOpcodeName(prefix, opcode) << "--" << endl;
 	//cout << "regA : " << (uint16_t)_register[R_A] << endl;
 	Stats::add(prefix, opcode);
 
@@ -182,6 +190,7 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 	//
 	else if(index == 2) // SUB
 	{
+	    /// TODO verify overflow
 		uint8_t result = (uint8_t)(_register[R_A] - value);
 		setFlagBit(F_S, ((int8_t)(result) < 0));
 		setFlagBit(F_Z, (_register[R_A] == value));
@@ -195,6 +204,16 @@ void CPU::aluOperation(uint8_t index, uint8_t value)
 		_register[R_A] = result;
 	}
 	//
+	else if(index == 4) // AND
+    {
+        _register[R_A] = (_register[R_A] & value);
+        setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
+        setFlagBit(F_Z, (_register[R_A] == 0));
+        setFlagBit(F_H, 1);
+        setFlagBit(F_P, nbBitsEven(_register[R_A]));
+        setFlagBit(F_N, 0);
+        setFlagBit(F_C, 0);
+    }
 	else if(index == 5) // XOR
 	{
 		_register[R_A] ^= value;
@@ -244,6 +263,7 @@ void CPU::rotOperation(uint8_t index, uint8_t reg)
 	if(index == 0) // RLC
 	{
 		/// TODO
+		slog << lerror << "TODO: rotation operation RLC" << endl;
 	}
 	//
 	else if(index == 4) // SLA
@@ -286,10 +306,41 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 	{
 		/// TODO understand (nationalisation ?)
 	}
+	else if(address == 0xDC || address == 0xC0)
+    {
+        /// TODO verification between Richard's and Marat's domentations
+
+        uint8_t returnCode = 0;
+        setBit8(&returnCode, 7, !_inputs->controllerKeyPressed(1, CK_DOWN));
+        setBit8(&returnCode, 6, !_inputs->controllerKeyPressed(1, CK_UP));
+        setBit8(&returnCode, 5, !_inputs->controllerKeyPressed(0, CK_FIREB));
+        setBit8(&returnCode, 4, !_inputs->controllerKeyPressed(0, CK_FIREA));
+        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(0, CK_RIGHT));
+        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(0, CK_LEFT));
+        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(0, CK_DOWN));
+        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(0, CK_UP));
+
+        return returnCode;
+    }
+    else if(address == 0xDD || address == 0xC1)
+    {
+        /// TODO nationalisation of 2 bits (7 & 6) with port 0x3F
+
+        uint8_t returnCode = 0;
+        setBit8(&returnCode, 4, 1); // reset button
+        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(0, CK_FIREB));
+        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(0, CK_FIREA));
+        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(0, CK_RIGHT));
+        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(0, CK_LEFT));
+
+        return returnCode;
+    }
 	else
 	{
 		slog << lwarning << hex << "Communication port 0x" << (uint16_t)address << " is not implemented" << endl;
 	}
+
+	return 0;
 }
 
 
@@ -428,6 +479,15 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		_register[R_A] = _register[R_A] << 1;
 		_register[0] = getFlagBit(F_C);
 	}
+	else if(x == 0 && z == 7 && y == 1) // RRCA
+    {
+        setFlagBit(F_H, 0);
+        setFlagBit(F_N, 0);
+        uint8_t bit0 = getBit8(_register[R_A], 0);
+        _register[R_A] = _register[R_A] >> 1;
+        setBit8(&_register[R_A], 7, bit0);
+        setFlagBit(F_C, bit0);
+    }
 	//
 	else if(x == 0 && z == 7 && y == 5) // CPL
 	{
@@ -533,7 +593,12 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		_IFF1 = false;
 		_IFF2 = false;
 	}
-	//
+	else if(x == 3 && z == 3 && y == 7) // EI
+    {
+        /// TODO verify if it's working well
+        _IFF1 = true;
+        _IFF2 = true;
+    }
 	else if(x == 3 && z == 4) // CALL cc[y],nn
 	{
 		uint16_t addr = _memory->read(_pc++);
@@ -594,7 +659,16 @@ void CPU::opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	{
 		rotOperation(y,z);
 	}
-	//
+	else if(x == 1) // BIT y, r[z]
+    {
+        setFlagBit(F_H, 1);
+        setFlagBit(F_N, 0);
+        if(getBit8(_register[z], y) == 0)
+            setFlagBit(F_Z, 1);
+        else
+            setFlagBit(F_Z, 0);
+    }
+    //
 	else
 	{
 		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (CB) is not implemented" << endl;

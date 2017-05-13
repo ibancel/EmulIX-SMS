@@ -37,7 +37,7 @@ public:
 
 	uint8_t getIE() {
 		uint8_t val = getBit8(_statusRegister, S_F);
-		_statusRegister = setBit8(_statusRegister, S_F, 0);
+		setBit8(&_statusRegister, S_F, 0);
 		return val;
 	}
 

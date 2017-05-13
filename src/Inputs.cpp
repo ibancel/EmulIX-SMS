@@ -1,9 +1,18 @@
 #include "Inputs.h"
 
 
+
 Inputs::Inputs()
 {
+    for(int i = 0 ; i < 6 ; i++)
+        _controller[i] = false;
 
+    _userKeys[CK_UP]    = sf::Keyboard::Up;
+    _userKeys[CK_DOWN]  = sf::Keyboard::Down;
+    _userKeys[CK_RIGHT] = sf::Keyboard::Right;
+    _userKeys[CK_LEFT]  = sf::Keyboard::Left;
+    _userKeys[CK_FIREA] = sf::Keyboard::D;
+    _userKeys[CK_FIREB] = sf::Keyboard::F;
 }
 
 
@@ -14,8 +23,18 @@ void Inputs::captureEvents(sf::RenderWindow *app)
 	{
 		if (event.type == sf::Event::Closed)
 			app->close();
+        if(event.type == sf::Event::KeyPressed)
+        {
+            for(int i = 0 ; i < 6 ; i++)
+                if(event.key.code == _userKeys[i])
+                    _controller[i] = true;
+        }
 		if(event.type == sf::Event::KeyReleased)
 		{
+		    for(int i = 0 ; i < 6 ; i++)
+                if(event.key.code == _userKeys[i])
+                    _controller[i] = false;
+
 			if(event.key.code == sf::Keyboard::Escape) {
 				app->close();
 			}
@@ -27,4 +46,9 @@ void Inputs::captureEvents(sf::RenderWindow *app)
 			}
 		}
 	}
+}
+
+bool Inputs::controllerKeyPressed(uint8_t idController, CONTROLLER_KEYS cKey)
+{
+    return _controller[cKey];
 }

@@ -43,7 +43,7 @@ void Graphics::reset()
 {
 	_register[0] = 0;
 	_register[1] = 0;
-	_statusRegister = setBit8(_statusRegister, S_F, 0);
+	setBit8(&_statusRegister, S_F, 0);
 	_count = 0;
 }
 
@@ -64,7 +64,7 @@ void Graphics::draw()
 
 	std::ostringstream ss;
 	int *most = Stats::getMost();
-	ss << timeCycle << endl << "mode: " << (uint16_t)_mode << endl << "most used : " << endl << "\t" << getOpcodeName(most[0]) << " - " << Stats::opcodeOccur[most[0]] << endl << "\t" << getOpcodeName(most[1]) << " - " << Stats::opcodeOccur[most[1]] << endl << "\t" << getOpcodeName(most[2]) << " - " << Stats::opcodeOccur[most[2]] << endl << "\t" << getOpcodeName(most[3]) << " - " << Stats::opcodeOccur[most[3]] << endl << "\t" << getOpcodeName(most[4]) << " - " << Stats::opcodeOccur[most[4]] << endl << "\t" << getOpcodeName(most[5]) << " - " << Stats::opcodeOccur[most[5]] << endl << "\t" << getOpcodeName(most[6]) << " - " << Stats::opcodeOccur[most[6]] << endl << "\t" << getOpcodeName(most[7]) << " - " << Stats::opcodeOccur[most[7]] << endl << "\t" << getOpcodeName(most[8]) << " - " << Stats::opcodeOccur[most[8]];
+	ss << timeCycle << endl << "mode: " << (uint16_t)_mode << endl << "most used : " << endl << "\t" << getOpcodeName(0, most[0]) << " - " << Stats::opcodeOccur[most[0]] << endl << "\t" << getOpcodeName(0, most[1]) << " - " << Stats::opcodeOccur[most[1]] << endl << "\t" << getOpcodeName(0, most[2]) << " - " << Stats::opcodeOccur[most[2]] << endl << "\t" << getOpcodeName(0, most[3]) << " - " << Stats::opcodeOccur[most[3]] << endl << "\t" << getOpcodeName(0, most[4]) << " - " << Stats::opcodeOccur[most[4]] << endl << "\t" << getOpcodeName(0, most[5]) << " - " << Stats::opcodeOccur[most[5]] << endl << "\t" << getOpcodeName(0, most[6]) << " - " << Stats::opcodeOccur[most[6]] << endl << "\t" << getOpcodeName(0, most[7]) << " - " << Stats::opcodeOccur[most[7]] << endl << "\t" << getOpcodeName(0, most[8]) << " - " << Stats::opcodeOccur[most[8]];
 	text.setString(ss.str());
 
 	sf::Text textReg;
@@ -108,8 +108,8 @@ void Graphics::draw()
 	_count++;
 	if(_count > 200) // TODO: remove
 	{
-		_register[1] = setBit8(_register[1], 5, 1);
-		_statusRegister = setBit8(_statusRegister, S_F, 1);
+		setBit8(&_register[1], 5, 1);
+		setBit8(&_statusRegister, S_F, 1);
 		_count = 0;
 	}
 }

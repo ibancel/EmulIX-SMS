@@ -10,6 +10,7 @@
 #include "Graphics.h"
 #include "Audio.h"
 #include "Cartridge.h"
+#include "Inputs.h"
 #include "Stats.h"
 #include "Singleton.h"
 
@@ -57,6 +58,7 @@ private:
 	Graphics *_graphics;
 	Cartridge *_cartridge;
 	Audio *_audio;
+	Inputs *_inputs;
 
     // special registers
 	uint16_t _pc;
