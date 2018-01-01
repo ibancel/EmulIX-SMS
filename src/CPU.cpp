@@ -43,52 +43,6 @@ void CPU::init()
 
 	_registerFlag = 0xFF;
 	_registerFlagA = 0xFF;
-
-	/// vv A ENLEVER vv
-	_memory->init();
-
-	//ifstream fichier("ROMS/zexall.sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Monaco GP (SG-1000).sg", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Borderline (SG-1000).sg", ios_base::in | ios_base::binary);
-	ifstream fichier("ROMS/Bomb Jack (SG-1000).sg", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Snail Music Demo (PD).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Only Words by Mike Gordon (PD).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/64 Color Palette Test (PD).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/V Counter Test by Charles MacDonald (PD).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Trans-Bot (UE).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Astro Flash (J) [!].sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Color & Switch Test (Unknown).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/F-16 Fighter (USA, Europe).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Ghost House (USA, Europe).sms", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Black Onyx, The (SG-1000) [!].sg", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Championship Golf (SG-1000).sg", ios_base::in | ios_base::binary);
-	//ifstream fichier("ROMS/Elevator Action (SG-1000) [!].sg", ios_base::in | ios_base::binary);
-
-
-	if(!fichier) {
-		slog << lerror << "ROM loading failed." << endl;
-		exit(EXIT_FAILURE);
-	}
-
-	char h;
-	uint8_t val;
-	uint16_t compteur = 0x0;
-	while(compteur < MEMORY_SIZE)
-	{
-		fichier.read(&h, sizeof(char));
-		val = static_cast<uint8_t>(h);
-		//cout << hex << (unsigned int)val << " ";
-		//cout << hex << compteur << " : " << (unsigned int)val << endl;
-
-		if(!fichier.good())
-		{
-			fichier.close();
-			break;
-		}
-
-		_memory->write(compteur++, val);
-	}
-	/// ^^ A ENLEVER ^^
 }
 
 void CPU::reset()
@@ -135,7 +89,10 @@ void CPU::cycle()
 
 		//usleep(500 * 1000);
 
-		if(_pc > 0x8000) exit(8);
+		if(_pc > 0x8000) {
+		    slog << lerror << "PC is higher than 0x8000" << endl;
+            exit(8);
+		}
 	}
 
 	systemStepCalled = false;
@@ -143,8 +100,8 @@ void CPU::cycle()
 
 resInstruction CPU::opcodeExecution(uint8_t prefix, uint8_t opcode)
 {
-	/// TODO: à prendre en compte les changements pour ALU
-	/// TODO: gérer les interruptions
+	/// TODO: take into account some change about ALU
+	/// TODO: fully manage interrupts
 
 	slog << ldebug << hex <<  "#" << (uint16_t)(_pc-1) << " : " << (uint16_t) opcode;
 	if(prefix != 0)
@@ -165,10 +122,12 @@ resInstruction CPU::opcodeExecution(uint8_t prefix, uint8_t opcode)
 		opcode0(x,y,z,p,q);
 	else if(prefix == 0xCB)
 		opcodeCB(x,y,z,p,q);
-	else if(prefix == 0xDD)
-		opcodeDD(x,y,z,p,q);
 	else if(prefix == 0xED)
 		opcodeED(x,y,z,p,q);
+    else if(prefix == 0xDD)
+		opcodeDD(x,y,z,p,q);
+    else if(prefix == 0xFD)
+        opcodeFD(x,y,z,p,q);
 }
 
 void CPU::aluOperation(uint8_t index, uint8_t value)
@@ -266,6 +225,19 @@ void CPU::rotOperation(uint8_t index, uint8_t reg)
 		slog << lerror << "TODO: rotation operation RLC" << endl;
 	}
 	//
+	if(index == 2) // RL
+    {
+        uint8_t val = (uint8_t)(_register[reg] << 1);
+        setBit8(&val, 0, getFlagBit(F_C));
+        setFlagBit(F_S, ((int8_t)(val) < 0));
+        setFlagBit(F_Z, (val == 0));
+        setFlagBit(F_H, 0);
+        setFlagBit(F_P, nbBitsEven(val));
+        setFlagBit(F_N, 0);
+        setFlagBit(F_C, (_register[reg]>>7)&1);
+        _register[reg] = val;
+    }
+	//
 	else if(index == 4) // SLA
 	{
 		uint8_t val = (uint8_t)(_register[reg] << 1);
@@ -308,7 +280,7 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 	}
 	else if(address == 0xDC || address == 0xC0)
     {
-        /// TODO verification between Richard's and Marat's domentations
+        /// TODO verification between Richard's and Marat's docs
 
         uint8_t returnCode = 0;
         setBit8(&returnCode, 7, !_inputs->controllerKeyPressed(1, CK_DOWN));
@@ -542,7 +514,11 @@ void CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		swapRegisterPair(RP_DE);
 		swapRegisterPair(RP_HL);
 	}
-	//
+	else if(x == 3 && z == 1 && q == 1 && p == 2) // JP HL
+    {
+        _pc = getRegisterPair(RP_HL);
+        slog << ldebug << hex << "JP to " << (uint16_t)_pc << endl;
+    }
 	else if(x == 3 && z == 1 && q == 1 && p == 3) // LD SP, HL
 	{
 		_sp = getRegisterPair(RP_HL);
@@ -675,18 +651,6 @@ void CPU::opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	}
 }
 
-void CPU::opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
-{
-	if(false)
-	{
-
-	}
-	else
-	{
-		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (DD) is not implemented" << endl;
-	}
-}
-
 void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 {
 	if(x == 0 || x == 3) // NOP
@@ -717,6 +681,23 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		_register[R_A] = result;
 	}
 	//
+	else if(x == 1 && z == 3 && q == 0) // LD (nn), rp[p]
+    {
+        uint16_t registerValue = getRegisterPair(p);
+        uint16_t addr = _memory->read(_pc++);
+		addr += (_memory->read(_pc++)<<8);
+		_memory->write(addr, getLowerByte(registerValue));
+		_memory->write(addr+1, getHigherByte(registerValue));
+    }
+    else if(x == 1 && z == 3 && q == 1) // LD rp[p], (nn)
+    {
+        uint16_t addr = _memory->read(_pc++);
+		addr += (_memory->read(_pc++)<<8);
+		uint16_t registerValue = _memory->read(addr);
+		registerValue += (_memory->read(addr)<<8);
+		setRegisterPair(p, registerValue);
+    }
+	//
 	else if(x == 1 && z == 5 && y != 1) // RETN
 	{
 		// TODO: verify
@@ -726,6 +707,13 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		_pc += (_stack[_sp++]<<8);
 		slog << lerror << "PC: " << _pc << endl;
 	}
+	else if(x == 1 && z == 5 && y == 1) // RETI
+    {
+        _pc = _stack[_sp++];
+        _pc += (_stack[_sp++]<<8);
+        /// TODO complete this with IEO
+        slog << lwarning << "TODO RETI" << endl;
+    }
 	//
 	else if(x == 1 && z == 6) // IM im[y]
 	{
@@ -739,6 +727,20 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		interrupt();
 	}
 	//
+	else if(x == 1 && z == 7 && y == 4) // RRD
+    {
+        uint8_t tempLowA = _register[R_A] & 0xF;
+        uint8_t tempHighMem = (_memory->read(getRegisterPair(RP_HL)) >> 4) & 0xF;
+        _register[R_A] = _memory->read(getRegisterPair(RP_HL)) & 0xF;
+        _memory->write(getRegisterPair(RP_HL), tempLowA);
+        _memory->write(getRegisterPair(RP_HL), tempHighMem);
+        setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
+        setFlagBit(F_Z, (_register[R_A] == 0));
+        setFlagBit(F_H, 0);
+        setFlagBit(F_P, nbBitsEven(_register[R_A]));
+        setFlagBit(F_N, 0);
+    }
+	//
 	else if(x == 2 && (z > 3 || y < 4)) // NONI & NOP
 	{
 		/// TODO
@@ -750,6 +752,44 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	else
 	{
 		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (ED) is not implemented" << endl;
+	}
+}
+
+void CPU::opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
+{
+    uint16_t prefixByte = (x<<6)+(y<<3)+z;
+
+	if(prefixByte == 0xDD || prefixByte == 0xED || prefixByte == 0xFD) // NONI
+	{
+        /// TODO NONI
+	}
+    else if(prefixByte == 0xCB) // DDCB prefix opcode
+    {
+        /// TODO FDCB
+        slog << lwarning << "DDCB prefix not implemented" << endl;
+    }
+	else
+	{
+		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (DD) is not implemented" << endl;
+	}
+}
+
+void CPU::opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
+{
+	uint16_t prefixByte = (x<<6)+(y<<3)+z;
+
+	if(prefixByte == 0xDD || prefixByte == 0xED || prefixByte == 0xFD) // NONI
+	{
+        /// TODO NONI
+	}
+    else if(prefixByte == 0xCB) // DDCB prefix opcode
+    {
+        /// TODO FDCB
+        slog << lwarning << "FDCB prefix not implemented" << endl;
+    }
+	else
+	{
+		slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (FD) is not implemented" << endl;
 	}
 }
 
@@ -771,7 +811,7 @@ void CPU::bliOperation(uint8_t x, uint8_t y)
 {
 	if(x == 6 && y == 0) // LDIR
 	{
-		/// TODO interrupts et tester ce bloc !
+		/// TODO interrupts and test this block !
 		_memory->write(getRegisterPair(RP_DE), _memory->read(getRegisterPair(RP_HL)));
 		setRegisterPair(RP_DE, getRegisterPair(RP_DE)+1);
 		setRegisterPair(RP_HL, getRegisterPair(RP_HL)+1);
@@ -810,14 +850,14 @@ void CPU::interrupt(bool nonMaskable)
     if(!_IFF1) return;
 
     if(_modeInt == 0) {
-        slog << ldebug << "TODO interrupt mode 0" << endl;
+        slog << lwarning << "TODO interrupt mode 0" << endl;
      }
      else if(_modeInt == 1) {
         reset();
         _pc = 0x38;
     }
     else if(_modeInt == 2) {
-         slog << ldebug << "TODO interrupt mode 2" << endl;
+         slog << lwarning << "TODO interrupt mode 2" << endl;
     }
 }
 

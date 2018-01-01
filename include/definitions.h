@@ -79,6 +79,13 @@ uint8_t getBit8(uint8_t value, uint8_t pos);
 void setBit8(uint8_t* value, uint8_t pos, bool newBit);
 
 
+// extract 8 lowest bits of a 16 bits value
+uint8_t getLowerByte(uint16_t value);
+
+// extract 8 hight bits of a 16 bits value
+uint8_t getHigherByte(uint16_t value);
+
+
 // count of bits is even or odd ? (true=even)
 bool nbBitsEven(uint8_t byte);
 

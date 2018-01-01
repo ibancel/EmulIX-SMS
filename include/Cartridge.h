@@ -14,13 +14,12 @@ public:
 	Cartridge();
 
 	void readFromFile(std::string filename);
-	//void readFromBuffer()
 
 	uint8_t getBlock(int address);
 	int getSize();
 
 private:
-    std::vector<uint8_t> _memory;
+    std::vector<uint8_t> _data;
 
 };
 

@@ -27,6 +27,16 @@ void setBit8(uint8_t* value, uint8_t pos, bool newBit)
 		*value |= 1 << (uint8_t)pos;
 }
 
+uint8_t getLowerByte(uint16_t value)
+{
+    return (value & 0xFF);
+}
+
+uint8_t getHigherByte(uint16_t value)
+{
+    return (value >> 8) & 0xFF;
+}
+
 bool nbBitsEven(uint8_t byte)
 {
 	byte ^= byte >> 4;

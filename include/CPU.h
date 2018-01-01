@@ -82,8 +82,9 @@ private:
 
 	void opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 	void opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	void opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 	void opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	void opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	void opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 
 	bool condition(uint8_t code);
 

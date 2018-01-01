@@ -18,9 +18,7 @@
 
 using namespace std;
 
-/// TODO classe mère pour les périphériques
-
-int main()
+int main(int argc, char *argv[])
 {
     Graphics::ratioSize = 2.0f;
 
@@ -31,23 +29,19 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "Emul - MasterSystem");
     Inputs *inputs = Inputs::instance();
-    Cartridge *rom = Cartridge::instance();
+    Cartridge *cartridge = Cartridge::instance();
     Memory *mem = Memory::instance();
-    //Graphics g(&mem, &window);
+
     Graphics *g = Graphics::instance();
     g->setWindow(&window);
-    //CPU cpu(&mem, &g, &rom);
+
     CPU *cpu = CPU::instance();
-    //rom.readFromFile("ROMS/Sonic the Hedgehog.sms");
-    //rom.readFromFile("ROMS/zexall.sms");
 
-    /*for(int i = 0 ; i < 260 ; i++)
-    cout << hex << i << " : " << getOpcodeName(i) << endl;*/
+    if(argc > 1) {
+		cartridge->readFromFile(argv[1]);
+    }
 
-
-    //sf::sleep(sf::Time(20));
-
-	// Fast implementation of breakpoints
+	// Quick implementation of breakpoints
     vector<int16_t> breakpoints;
 
 

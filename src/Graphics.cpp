@@ -108,8 +108,8 @@ void Graphics::draw()
 	_count++;
 	if(_count > 200) // TODO: remove
 	{
-		setBit8(&_register[1], 5, 1);
-		setBit8(&_statusRegister, S_F, 1);
+		//setBit8(&_register[1], 5, 1);
+		//setBit8(&_statusRegister, S_F, 1);
 		_count = 0;
 	}
 }
