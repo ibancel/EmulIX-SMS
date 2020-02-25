@@ -6,7 +6,9 @@
 
 #include "definitions.h"
 #include "Singleton.h"
+#include "Debugger.h"
 
+class Graphics;
 
 enum CONTROLLER_KEYS { CK_UP = 0, CK_DOWN = 1, CK_RIGHT = 2, CK_LEFT = 3, CK_FIREA = 4, CK_FIREB = 5 };
 
@@ -17,7 +19,8 @@ public:
     Inputs();
 
 
-    void captureEvents(sf::RenderWindow *app);
+    void captureEventsInfo(sf::RenderWindow *app);
+    void captureEventsGame(sf::RenderWindow *app);
 
     // idController is 0 for Joypad 1 and 1 for Joypad 2
     bool controllerKeyPressed(uint8_t idController, CONTROLLER_KEYS key);
@@ -25,7 +28,8 @@ public:
 private:
     bool _controller[6];
     sf::Keyboard::Key _userKeys[6];
-
+    Debugger* _debugger;
+    Graphics* _graphics;
 };
 
 #endif

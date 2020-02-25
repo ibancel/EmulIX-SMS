@@ -1,11 +1,14 @@
 #include "Inputs.h"
 
+#include "Graphics.h"
 
 
-Inputs::Inputs()
+
+Inputs::Inputs() : _debugger{Debugger::Instance()}, _graphics{Graphics::Instance()}
 {
-    for(int i = 0 ; i < 6 ; i++)
-        _controller[i] = false;
+	for (int i = 0; i < 6; i++) {
+		_controller[i] = false;
+	}
 
     _userKeys[CK_UP]    = sf::Keyboard::Up;
     _userKeys[CK_DOWN]  = sf::Keyboard::Down;
@@ -16,7 +19,31 @@ Inputs::Inputs()
 }
 
 
-void Inputs::captureEvents(sf::RenderWindow *app)
+void Inputs::captureEventsInfo(sf::RenderWindow *app)
+{
+	sf::Event event;
+	while (app->pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+			app->close();
+		if(event.type == sf::Event::KeyReleased)
+		{
+			if(event.key.code == sf::Keyboard::Escape) {
+				app->close();
+			}
+			if (event.key.code == sf::Keyboard::Numpad0 || event.key.code == sf::Keyboard::Num0) {
+				_graphics->switchInfoPrintMode();
+			}
+			if (event.key.code == sf::Keyboard::V) {
+				_graphics->dumpVram();
+			}
+			_debugger->captureEvents(event);
+		}
+
+	}
+}
+
+void Inputs::captureEventsGame(sf::RenderWindow *app)
 {
 	sf::Event event;
 	while (app->pollEvent(event))
@@ -35,16 +62,15 @@ void Inputs::captureEvents(sf::RenderWindow *app)
                 if(event.key.code == _userKeys[i])
                     _controller[i] = false;
 
-			if(event.key.code == sf::Keyboard::Escape) {
+			if (event.key.code == sf::Keyboard::Escape) {
 				app->close();
 			}
-			else if(event.key.code == sf::Keyboard::Space) {
-				if(!STEP_BY_STEP)
-					systemPaused = !systemPaused;
-				else
-					systemStepCalled = true;
+			if (event.key.code == sf::Keyboard::Numpad0 || event.key.code == sf::Keyboard::Num0) {
+				_graphics->switchInfoPrintMode();
 			}
+			_debugger->captureEvents(event);
 		}
+
 	}
 }
 

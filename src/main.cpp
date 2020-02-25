@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #ifdef __linux__
 #include <pthread.h>
@@ -14,68 +15,86 @@
 #include "Graphics.h"
 #include "CPU.h"
 #include "Log.h"
+#include "Debugger.h""
+#include "Breakpoint.h"
 
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    Graphics::ratioSize = 2.0f;
+    sf::RenderWindow windowGame;
 
-    //Log::typeMin = Log::ALL & (~Log::DEBUG);
-    Log::typeMin = Log::ALL;
+    Graphics::RatioSize = 1.0f;
+
+    // Example: Log::typeMin = Log::ALL & (~Log::DEBUG);
+    #if DEBUG_MODE
+        Log::printConsole = true;
+        Log::printFile = false;
+        Log::typeMin = Log::ALL;
+    #else
+        Log::typeMin = Log::NONE;
+    #endif
+
     Log::exitOnWarning = true;
-    //Log::exitOnError = false;
 
-    sf::RenderWindow window(sf::VideoMode(GRAPHIC_WIDTH*Graphics::ratioSize, GRAPHIC_WIDTH*Graphics::ratioSize), "Emul - MasterSystem");
-    Inputs *inputs = Inputs::instance();
-    Cartridge *cartridge = Cartridge::instance();
-    Memory *mem = Memory::instance();
+    sf::RenderWindow windowInfo(sf::VideoMode(static_cast<int>(GRAPHIC_WIDTH*2), static_cast<int>(GRAPHIC_HEIGHT*2)), "Info - EmulIX MasterSystem");
+    sf::Vector2i actualWinPos = windowInfo.getPosition();
+    windowInfo.setPosition(sf::Vector2i(actualWinPos.x-GRAPHIC_WIDTH*2/2, actualWinPos.y));
+    Inputs *inputs = Inputs::Instance();
+    Cartridge *cartridge = Cartridge::Instance();
+    Memory *mem = Memory::Instance();
 
-    Graphics *g = Graphics::instance();
-    g->setWindow(&window);
+    Graphics *g = Graphics::Instance();
+    g->setWindowInfo(&windowInfo);
 
-    CPU *cpu = CPU::instance();
+    CPU *cpu = CPU::Instance();
 
     if(argc > 1) {
-		cartridge->readFromFile(argv[1]);
+        cartridge->insert(argv[1]);
+        windowGame.create(sf::VideoMode(GRAPHIC_WIDTH*Graphics::RatioSize*2.0, GRAPHIC_HEIGHT*Graphics::RatioSize*2.0), "Game - EmulIX MasterSystem");
+        actualWinPos = windowGame.getPosition();
+        windowGame.setPosition(sf::Vector2i(actualWinPos.x+GRAPHIC_WIDTH*Graphics::RatioSize*2.0/2, actualWinPos.y));
+        g->setWindowGame(&windowGame);
     }
 
-	// Quick implementation of breakpoints
-    vector<int16_t> breakpoints;
 
+    Debugger* debugger = Debugger::Instance();
 
-	bool toPause;
-    while (window.isOpen())
+    // Example of breakpoints:
+    //debugger->addBreakpoint(std::make_unique<Breakpoint>(Breakpoint::Type::kNumInstruction, 1234));
+    //debugger->addBreakpoint(std::make_unique<Breakpoint>(Breakpoint::Type::kAddress, 0x4321));
+
+    cpu->init();
+
+    constexpr double microsecondPerState = 1.0 / 3.58;
+
+    std::chrono::time_point<std::chrono::steady_clock> chronoSync = chrono::steady_clock::now();
+    chrono::duration<double, std::micro> intervalCycle;
+    while (windowInfo.isOpen())
     {
-        inputs->captureEvents(&window);
+        inputs->captureEventsInfo(&windowInfo);
 
-        window.clear(sf::Color::Black);
-
-		toPause = false;
-        for(int i = 0 ; i < breakpoints.size() && !systemPaused ; i++) {
-			if(cpu->getProgramCounter() == breakpoints[i]) {
-				#if BREAKPOINT_STYLE == 0
-				systemPaused = true;
-				#elif BREAKPOINT_STYLE == 1
-				toPause = true;
-				#endif // BREAKPOINT_STYLE
-				breakpoints.erase(breakpoints.begin()+i);
-			}
+        if (debugger->manage(cpu->getProgramCounter()) == Debugger::State::kRunning) {
+            cpu->cycle();
+        } else {
+            //Log::printConsole = true;
+            //Log::printFile = true;
+            std::this_thread::sleep_for(1ms);
         }
 
-        /*if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-			systemStepCalled = true;*/
+        g->drawInfo();
 
-        if(!systemPaused)
-            cpu->cycle();
+        if(windowGame.isOpen()) {
+            inputs->captureEventsGame(&windowGame);
+            g->drawGame();
+        }
 
-        g->draw();
-
-		if(toPause)
-			systemPaused = true;
-
-        window.display();
+        const uint8_t tState = 9;
+        do {
+            intervalCycle = chrono::steady_clock::now() - chronoSync;
+        } while (intervalCycle.count() < tState * microsecondPerState);
+        chronoSync = chrono::steady_clock::now();
     }
 
     return 0;

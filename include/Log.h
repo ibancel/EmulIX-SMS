@@ -8,17 +8,31 @@
 #include <cstdlib>
 #include <fstream>
 
+#include <stdexcept>
+
 #include "definitions.h"
 
+#if DEBUG_MODE
+#define SLOG(x) slog << x;
+#define SLOG_THROW(x) SLOG(x); throw std::runtime_error("not implemented");
+#define SLOG_NOENDL(x) slog << x;
+#else
+#define SLOG(x) ;
+#define SLOG_THROW(x) slog << x << std::endl; throw std::runtime_error("not implemented");
+#define SLOG_NOENDL(x) ;
+#endif
+
+#undef ERROR
 
 class Log : public std::ostream
 {
 public:
-	enum type { NORMAL = 0b1, DEBUG = 0b10, WARNING = 0b100, ERROR = 0b1000, ALL = 0b1111 };
+	enum type : int16_t { NONE = 0, NORMAL = 0b1, DEBUG = 0b10, NOTIF = 0b100, WARNING = 0b1000, ERROR = 0b1'0000, ALL = 0b1'1111 };
 
 	Log(std::string logPath = "log.txt") : std::ostream(&_buffer), _buffer(std::cout, logPath) { _currentType = type::NORMAL; };
 
 	static bool printConsole;
+	static bool printFile;
 	static int typeMin;
 	static int nbChange;
 	static type currentType;
@@ -38,40 +52,49 @@ public:
 		virtual int sync ( )
 		{
 			std::string strAdd = str(); str("");
+
+#if !DEBUG_MODE
+			if(_type == Log::type::DEBUG) return 0;
+#endif
+
 			Log::type oldType = _type;
 
 			Log::nbChange = 0;
 			changeType(Log::NORMAL);
 
-			if(strAdd == "") return 0;
-			if(oldType == Log::type::DEBUG && !DEBUG_MODE) return 0;
-			if(Log::isUniqueType(typeMin) && oldType < Log::typeMin) return 0;
-			else if(!Log::isUniqueType(typeMin) && (oldType & typeMin) == 0) return 0;
+			bool isExiting = oldType == ERROR || (oldType == WARNING && exitOnWarning);
 
-			_output << "[Log]" << strAdd;
-			_outFile << strAdd;
-			if(strAdd[strAdd.size()-1] != '\n') {
-                _output << std::endl;
-                _outFile << std::endl;
-            }
+			if(strAdd == "" && !isExiting) return 0;
 
-			_output.flush();
+			bool isUniqueType = Log::isUniqueType(typeMin);
 
-			if(oldType == WARNING)
-			{
-				if(exitOnWarning)
-					exit(1 + WARNING);
+			if(isUniqueType && (typeMin == 0 || oldType < Log::typeMin) && !isExiting) return 0;
+			else if(!isUniqueType && (oldType & typeMin) == 0 && !isExiting) return 0;
+
+			if (Log::printConsole || isExiting) {
+				_output << "[Log]" << strAdd;
+				if (strAdd[strAdd.size() - 1] != '\n') {
+					_output << '\n';
+				}
+				_output.flush();
 			}
-			else if(oldType == ERROR)
-			{
-				if(exitOnWarning || exitOnWarning)
-					exit(1 + ERROR);
+			if (Log::printFile) {
+				_outFile << strAdd;
+				if (strAdd[strAdd.size() - 1] != '\n') {
+					_outFile << '\n';
+				}
+			}
+
+			if(oldType == WARNING && exitOnWarning) {
+				exit(1 + WARNING);
+			} else if(oldType == ERROR) {
+				exit(1 + ERROR);
 			}
 
 			return 0;
 		};
 
-		void changeType(Log::type typeLog) { _type = typeLog; };
+		inline void changeType(Log::type typeLog) { _type = typeLog; };
 
 	private:
 		std::ostream& _output;
@@ -87,7 +110,7 @@ public:
 
 	static std::string getTypeStr(type typeLog);
 
-	static bool isUniqueType(int typeFlag);
+	static bool isUniqueType(int16_t typeFlag);
 
 	bool changeType(type typeLog);
 	type getCurrentType() { return _currentType; };
@@ -117,11 +140,13 @@ inline Log& operator<<(Log& l, std::ostream &stream)
 
 class LogNormal { };
 class LogDebug { };
+class LogNotif { };
 class LogWarning { };
 class LogError { };
 
 extern LogNormal lnormal;
 extern LogDebug ldebug;
+extern LogNotif lnotif;
 extern LogWarning lwarning;
 extern LogError lerror;
 
@@ -142,13 +167,25 @@ inline Log& operator<<(Log& l, LogNormal type)
 }
 inline Log& operator<<(Log& l, LogDebug t)
 {
-	if(Log::nbChange != 0)
+	if (Log::nbChange != 0)
 		l << std::flush;
 
-	if(!l.changeType(Log::type::DEBUG))
+	if (!l.changeType(Log::type::DEBUG))
 		return l;
 
 	l << strManipulator(Log::type::DEBUG);
+
+	return l;
+}
+inline Log& operator<<(Log& l, LogNotif t)
+{
+	if (Log::nbChange != 0)
+		l << std::flush;
+
+	if (!l.changeType(Log::type::NOTIF))
+		return l;
+
+	l << strManipulator(Log::type::NOTIF);
 
 	return l;
 }

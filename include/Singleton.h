@@ -7,12 +7,10 @@ class Singleton
 
 public:
 
-	static T* instance()
+	static T* Instance()
 	{
 		if(_instance == nullptr)
 			_instance = new T();
-
-	//	cout << "SINGLETON" << endl;
 
 		return _instance;
 	}

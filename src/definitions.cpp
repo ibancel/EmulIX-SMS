@@ -1,40 +1,32 @@
 #include "definitions.h"
 
-bool systemPaused = false;
-bool systemStepCalled = false;
-
 std::string getOpcodeName(uint8_t prefix, uint8_t opcode)
 {
+	uint8_t x = ((opcode & 0b11000000) >> 6);
+	uint8_t y = ((opcode & 0b00111000) >> 3);
+	uint8_t z = (opcode & 0b00000111);
     if(prefix == 0xCB) {
-        return OPCODECB_NAME[ ((opcode & 0b11000000) >>6) ];
-    }
+        return OPCODE_CB_NAME[x];
+	} else if (prefix == 0xED) {
+		if (x == 2 && y >= 4) {
+			return "bli[y,z]";
+		} else if (x != 1) {
+			return "NOP & NONI";
+		}
+		return OPCODE_ED_NAME[(z << 3) + y];
+	}
     // else:
-    uint8_t value = (opcode & 0b11000000) + ((opcode & 0b00111000) >> 3) + ((opcode & 0b00000111) << 3);
+    uint8_t value = (x << 6) + (z << 3) + y;
     return OPCODE_NAME[value];
 }
 
-uint8_t getBit8(uint8_t value, uint8_t pos)
-{
-	return (value >> pos) & 0b1;
-}
 
 void setBit8(uint8_t* value, uint8_t pos, bool newBit)
 {
-	//*value = copySetBit8(*value, pos, newBit);
 	if(!newBit)
 		*value &= ~(1 << (uint8_t)pos);
 	else
 		*value |= 1 << (uint8_t)pos;
-}
-
-uint8_t getLowerByte(uint16_t value)
-{
-    return (value & 0xFF);
-}
-
-uint8_t getHigherByte(uint16_t value)
-{
-    return (value >> 8) & 0xFF;
 }
 
 bool nbBitsEven(uint8_t byte)

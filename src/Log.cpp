@@ -5,7 +5,8 @@
 
 using namespace std;
 
-bool Log::printConsole = true;
+bool Log::printConsole = false;
+bool Log::printFile = false;
 int Log::typeMin = Log::type::ALL;
 int Log::nbChange = 0;
 bool Log::exitOnWarning = false;
@@ -14,6 +15,7 @@ Log::type Log::currentType = Log::type::NORMAL;
 Log slog;
 LogNormal lnormal;
 LogDebug ldebug;
+LogNotif lnotif;
 LogWarning lwarning;
 LogError lerror;
 
@@ -25,24 +27,33 @@ void Log::print(string str, type typeLog)
 
 string Log::getTypeStr(type typeLog)
 {
-	if(typeLog == Log::type::NORMAL)
+	if (typeLog == Log::type::NORMAL) {
 		return "Normal";
-	if(typeLog == Log::type::DEBUG)
+	}  else if (typeLog == Log::type::DEBUG) {
 		return "Debug";
-	if(typeLog == Log::type::WARNING)
+	} else if (typeLog == Log::type::NOTIF) {
+		return "Notif";
+	} else if (typeLog == Log::type::WARNING) {
 		return "Warning";
-	if(typeLog == Log::type::ERROR)
+	} else if (typeLog == Log::type::ERROR) {
 		return "Error";
+	}
 
 	return "Undefined";
 }
 
-bool Log::isUniqueType(int typeFlag)
+bool Log::isUniqueType(int16_t typeFlag)
 {
-	float calc = pow(typeFlag, 0.5f);
+	int oneOccurence = 0;
+	for (int i = 0; i < 16; i++) {
+		if (getBit8(typeFlag, i) == 1) {
+			oneOccurence++;
+		}
+	}
 
-    if(calc == floor(calc))
+	if (oneOccurence <= 1) {
 		return true;
+	}
 
 	return false;
 }

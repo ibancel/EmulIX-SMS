@@ -53,6 +53,8 @@ uint8_t Audio::write(uint8_t port, uint8_t data)
 
 		playSound((_registerLatch & 0b0110) >> 1);
 	}
+
+	return 0; // TODO
 }
 
 void Audio::run()

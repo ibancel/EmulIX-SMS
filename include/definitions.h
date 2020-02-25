@@ -3,32 +3,36 @@
 
 #include <iostream>
 
-#define DEBUG_MODE true
-#define STEP_BY_STEP false
+#define DEBUG_MODE _DEBUG
 
 #define BREAKPOINT_STYLE 1 // 0 for before execution, 1 for after
+
+#define TIME_SCALE 1.00f
 
 #define MEMORY_SIZE 65536
 #define REGISTER_SIZE 8
 #define CARTRIDGE_MAX_SIZE 524288
 
 #define GRAPHIC_WIDTH 256
-#define GRAPHIC_HEIGHT 240
+#define GRAPHIC_HEIGHT 192
 #define GRAPHIC_VRAM_SIZE 16384
-#define GRAPHIC_REGISTER_SIZE 8
+#define GRAPHIC_CRAM_SIZE 32
+#define GRAPHIC_REGISTER_SIZE 11
 
-extern bool systemPaused;
-extern bool systemStepCalled;
+#define MACHINE_MODEL 0 // 0: domestic (JP) / 1: export (US, EU, ...)
+#define MACHINE_VERSION 1 // 0: SMS1 / 1: SMS2
+
+#define NOT_IMPLEMENTED(string) SLOG_THROW(lwarning << std::dec << __FILE__ << "#" << __LINE__ << " NOT_IMPLEMENTED: " << string << std::endl);
 
 
 const std::string OPCODE_NAME[] = {
 
-	/// Important TODO: wrong name for p / q values
+	/// Important TODO: wrong name for p / q values (x0 done)
 
    // x = 0
    "NOP", "EX AF, AF'", "DJNZ d", "JR d", "JR cc[y-4],d", "JR cc[y-4],d", "JR cc[y-4],d", "JR cc[y-4],d",
    "LD rp[p], nn", "ADD HL, rp[p]", "LD rp[p], nn", "ADD HL, rp[p]", "LD rp[p], nn", "ADD HL, rp[p]", "LD rp[p], nn", "ADD HL, rp[p]",
-   "LD (BC), A", "LD (DE), A", "LD (nn), HL", "LD (nn), A", "LD A, (BC)", "LD A, (DE)", "LD HL, (nn)", "LD A, (nn)",
+   "LD (BC), A", "LD (A), BC", "LD (DE), A", "LD (A), DE", "LD (nn), HL", "LD HL, (nn)", "LD (nn), A", "LD A, (nn)",
    "INC rp[p]", "DEC rp[p]", "INC rp[p]", "DEC rp[p]", "INC rp[p]", "DEC rp[p]", "INC rp[p]", "DEC rp[p]",
    "INC r[y]", "INC r[y]", "INC r[y]", "INC r[y]", "INC r[y]", "INC r[y]", "INC r[y]", "INC r[y]",
    "DEC r[y]", "DEC r[y]", "DEC r[y]", "DEC r[y]", "DEC r[y]", "DEC r[y]", "DEC r[y]", "DEC r[y]",
@@ -66,12 +70,27 @@ const std::string OPCODE_NAME[] = {
    "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8", "RST y*8",
 };
 
-const std::string OPCODECB_NAME[] = { "rot[y] r[z]", "BIT y, r[z]", "RES y, r[z]", "SET y, r[z]" };
+const std::string OPCODE_CB_NAME[] = { "rot[y] r[z]", "BIT y, r[z]", "RES y, r[z]", "SET y, r[z]" };
+
+
+// Only for x == 1:
+const std::string OPCODE_ED_NAME[] = { 
+    "IN r[y], (C)", "IN r[y], (C)", "IN r[y], (C)", "IN r[y], (C)", "IN r[y], (C)", "IN r[y], (C)", "IN (C)", "IN r[y], (C)",
+    "OUT (C), r[y]", "OUT (C), r[y]", "OUT (C), r[y]", "OUT (C), r[y]", "OUT (C), r[y]", "OUT (C), r[y]", "OUT (C), 0", "OUT (C), r[y]",
+    "SBC HL, rp[p]", "ADC HL, rp[p]", "-", "-", "-", "-", "-", "-",
+    "LD (nn), rp[p]", "LD rp[p], (nn)", "-", "-", "-", "-", "-", "-",
+    "NEG", "NEG", "NEG", "NEG", "NEG", "NEG", "NEG", "NEG",
+    "RETN", "RETI", "RETN", "RETN", "RETN", "RETN", "RETN", "RETN",
+    "IM im[y]", "IM im[y]", "IM im[y]", "IM im[y]", "IM im[y]", "IM im[y]", "IM im[y]", "IM im[y]",
+    "LD I, A", "LD R,A", "LD A, I", "LD A, R", "RRD", "RLD", "NOP", "NOP"
+};
 
 std::string getOpcodeName(uint8_t prefix, uint8_t opcode);
 
 // pos from 0 to 7 (with 7 MSB)
-uint8_t getBit8(uint8_t value, uint8_t pos);
+inline uint8_t getBit8(uint8_t value, uint8_t pos) {
+    return (value >> pos) & 0b1;
+}
 
 // value is the variable that will be changed
 // pos from 0 to 7 (with 7 MSB)
@@ -80,13 +99,39 @@ void setBit8(uint8_t* value, uint8_t pos, bool newBit);
 
 
 // extract 8 lowest bits of a 16 bits value
-uint8_t getLowerByte(uint16_t value);
+inline uint8_t getLowerByte(uint16_t value) {
+    return (value & 0xFF);
+}
+
+inline void setLowerByte(uint16_t &ioToSet, uint8_t byte) {
+    ioToSet = (ioToSet &0xFF00) | (byte&0x00FF);
+}
 
 // extract 8 hight bits of a 16 bits value
-uint8_t getHigherByte(uint16_t value);
+inline uint8_t getHigherByte(uint16_t value) {
+    return (value >> 8) & 0xFF;
+}
+
+inline void setHigherByte(uint16_t& ioToSet, uint8_t byte) {
+    ioToSet = (ioToSet & 0x00FF) | (byte & 0xFF00);
+}
 
 
 // count of bits is even or odd ? (true=even)
 bool nbBitsEven(uint8_t byte);
+
+inline uint8_t sign8(uint8_t byte) {
+    return byte >> 7;
+}
+inline uint16_t sign16(uint16_t word) {
+    return word >> 15;
+}
+
+inline bool isPositive8(uint8_t byte) {
+    return static_cast<bool>(sign8(byte));
+}
+inline bool isPositive16(uint16_t word) {
+    return static_cast<bool>(sign16(word));
+}
 
 #endif
