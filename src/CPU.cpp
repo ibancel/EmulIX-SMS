@@ -23,7 +23,9 @@ CPU::CPU(Memory* m, Graphics* g, Cartridge* c) :
 	_register{ 0 },
 	_stack{ 0 },
 	_useRegisterIX{ 0 },
-	_useRegisterIY{ 0 }
+	_useRegisterIY{ 0 },
+	_displacementForIndexUsed{ false },
+	_displacementForIndex{ 0 }
 	
 {
 	_memory = m;
@@ -66,6 +68,9 @@ void CPU::init()
 	_registerR = 0;
 	_ioPortControl = 0;
 
+	_displacementForIndexUsed = false;
+	_displacementForIndex = 0;
+
 	stopRegisterIX();
 	stopRegisterIY();
 
@@ -98,8 +103,12 @@ void CPU::reset()
     _registerR = 0;
     _modeInt = 0;
     _registerFlag = 0xFF;
+
 	_isBlockInstruction = false;
 	_ioPortControl = 0;
+
+	_displacementForIndexUsed = false;
+	_displacementForIndex = 0;
 }
 
 void CPU::cycle()
@@ -272,7 +281,7 @@ void CPU::aluOperation(const uint8_t index, const uint8_t value)
 		setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
 		setFlagBit(F_Z, (_register[R_A] == 0));
 		setFlagBit(F_H, 0);
-		setFlagBit(F_P, (_register[R_A]<value));
+		setFlagBit(F_P, nbBitsEven(_register[R_A]));
 		setFlagBit(F_N, 0);
 		setFlagBit(F_C, 0);
 		setFlagBit(F_F3, (_register[R_A]>>2)&1);
@@ -285,7 +294,7 @@ void CPU::aluOperation(const uint8_t index, const uint8_t value)
 		setFlagBit(F_S, ((int8_t)(sum) < 0));
 		setFlagBit(F_Z, (sum == 0));
 		setFlagBit(F_H, ((_register[R_A]&0xF) - (value&0xF) < (_register[R_A]&0xF))); // ?
-		setFlagBit(F_P, ((_register[R_A]>>7)==(value>>7) && (value>>7)!=(sum>>7))); // ?
+		setFlagBit(F_P, ((sign8(_register[R_A]) != sign8(sum)) && (sign8(value)==sign8(sum))));
 		setFlagBit(F_N, 1);
 		setFlagBit(F_C, (sum > _register[R_A])); // ?
 		setFlagBit(F_F3, (value>>2)&1);
@@ -343,14 +352,14 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
         /// TODO verification between Richard's and Marat's docs
 
         uint8_t returnCode = 0;
-        setBit8(&returnCode, 7, !_inputs->controllerKeyPressed(1, CK_DOWN));
-        setBit8(&returnCode, 6, !_inputs->controllerKeyPressed(1, CK_UP));
-        setBit8(&returnCode, 5, !_inputs->controllerKeyPressed(0, CK_FIREB));
-        setBit8(&returnCode, 4, !_inputs->controllerKeyPressed(0, CK_FIREA));
-        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(0, CK_RIGHT));
-        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(0, CK_LEFT));
-        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(0, CK_DOWN));
-        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(0, CK_UP));
+        setBit8(&returnCode, 7, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_DOWN));
+        setBit8(&returnCode, 6, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_UP));
+        setBit8(&returnCode, 5, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_FIREB));
+        setBit8(&returnCode, 4, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_FIREA));
+        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_RIGHT));
+        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_LEFT));
+        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_DOWN));
+        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(Inputs::kJoypad1, Inputs::CK_UP));
 
         return returnCode;
     }
@@ -367,12 +376,19 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 #endif
 		} else {
 			// TODO: lightgun
+			setBit8(&returnCode, 7, 1);
+			setBit8(&returnCode, 6, 1);
 		}
-        setBit8(&returnCode, 4, 1); // reset button
-        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(0, CK_FIREB));
-        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(0, CK_FIREA));
-        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(0, CK_RIGHT));
-        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(0, CK_LEFT));
+#if MACHINE_MODEL == 0 || MACHINE_MODEL == 1
+		setBit8(&returnCode, 5, 1);
+#else
+		NOT_IMPLEMENTED("Bit 5 of I/O port B");
+#endif
+        setBit8(&returnCode, 4, 1); // TODO: reset button
+        setBit8(&returnCode, 3, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_FIREB));
+        setBit8(&returnCode, 2, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_FIREA));
+        setBit8(&returnCode, 1, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_RIGHT));
+        setBit8(&returnCode, 0, !_inputs->controllerKeyPressed(Inputs::kJoypad2, Inputs::CK_LEFT));
 
         return returnCode;
     }
@@ -961,11 +977,10 @@ void CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	//
 	else if(x == 1 && z == 7 && y == 4) // RRD
     {
+		uint8_t valueInMemory = readMemoryHL();
         uint8_t tempLowA = _register[R_A] & 0xF;
-        uint8_t tempHighMem = (_memory->read(getRegisterPair(RP_HL)) >> 4) & 0xF;
-        _register[R_A] = _memory->read(getRegisterPair(RP_HL)) & 0xF;
-        _memory->write(getRegisterPair(RP_HL), tempLowA);
-        _memory->write(getRegisterPair(RP_HL), tempHighMem);
+        _register[R_A] = (_register[R_A] & 0xF0) | (valueInMemory & 0x0F);
+		writeMemoryHL((tempLowA << 4) | (valueInMemory >> 4));
         setFlagBit(F_S, ((int8_t)(_register[R_A]) < 0));
         setFlagBit(F_Z, (_register[R_A] == 0));
         setFlagBit(F_H, 0);
@@ -1000,6 +1015,8 @@ void CPU::opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
     {
 		useRegisterIX();
 		_cbDisplacement = static_cast<int8_t>(_memory->read(_pc++));
+		_displacementForIndex = _cbDisplacement;
+		_displacementForIndexUsed = true;
 		const uint8_t opcode = _memory->read(_pc++);
 		const uint8_t x = (opcode >> 6) & 0b11;
 		const uint8_t y = (opcode >> 3) & 0b111;
@@ -1008,12 +1025,15 @@ void CPU::opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		const uint8_t q = y & 0b1;
 		opcodeCB(x, y, z, p, q);
 		stopRegisterIX();
+		_displacementForIndexUsed = false;
     }
 	else
 	{
-		_pc--;
+		// TODO (IX+d) for (HL)
 		useRegisterIX();
-		// slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (DD) is not implemented" << endl;
+		opcode0(x, y, z, p, q);
+		stopRegisterIX();
+		_displacementForIndexUsed = false;
 	}
 }
 
@@ -1028,36 +1048,58 @@ void CPU::opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 	}
     else if(prefixByte == 0xCB) // DDCB prefix opcode
     {
-        /// TODO FDCB
-        slog << lwarning << "FDCB prefix not implemented" << endl;
+		useRegisterIY();
+		_cbDisplacement = static_cast<int8_t>(_memory->read(_pc++));
+		_displacementForIndex = _cbDisplacement;
+		_displacementForIndexUsed = true;
+		const uint8_t opcode = _memory->read(_pc++);
+		const uint8_t x = (opcode >> 6) & 0b11;
+		const uint8_t y = (opcode >> 3) & 0b111;
+		const uint8_t z = (opcode >> 0) & 0b111;
+		const uint8_t p = (y >> 1);
+		const uint8_t q = y & 0b1;
+		_cbDisplacement = static_cast<int8_t>(_memory->read(_pc++));
+		opcodeCB(x, y, z, p, q);
+		stopRegisterIY();
+		_displacementForIndexUsed = false;
     }
 	else
 	{
-		_pc--;
+		// TODO (IY+d) for (HL)
 		useRegisterIY();
-		// slog << lwarning << "Opcode : " << hex << (uint16_t)((x<<6)+(y<<3)+z) << " (FD) is not implemented" << endl;
+		opcode0(x, y, z, p, q);
+		stopRegisterIY();
+		_displacementForIndexUsed = false;
 	}
 }
 
 bool CPU::condition(uint8_t code)
 {
-	if(code == 0)
+	if (code == 0) {
 		return !getFlagBit(F_Z);
-	else if(code == 1)
+	} else if (code == 1) {
 		return getFlagBit(F_Z);
-	else if(code == 2)
+	} else if (code == 2) {
 		return !getFlagBit(F_C);
-	else if(code == 3)
+	} else if (code == 3) {
 		return getFlagBit(F_C);
+	} else if (code == 4) {
+		return !getFlagBit(F_P);
+	} else if (code == 5) {
+		return getFlagBit(F_P);
+	} else if (code == 6) {
+		return !getFlagBit(F_S);
+	}
+	// else: code == 7
 
-	return false;
+	return getFlagBit(F_S);
 }
 
 void CPU::bliOperation(uint8_t x, uint8_t y)
 {
 	if (x == 4 && y == 0) // LDI
 	{
-		_memory->write(getRegisterPair(RP_DE), _memory->read(getRegisterPair(RP_HL)));
+		_memory->write(getRegisterPair(RP_DE), readMemoryHL());
 		setRegisterPair(RP_DE, getRegisterPair(RP_DE) + 1);
 		setRegisterPair(RP_HL, getRegisterPair(RP_HL) + 1);
 		setRegisterPair(RP_BC, getRegisterPair(RP_BC) - 1);
@@ -1070,7 +1112,7 @@ void CPU::bliOperation(uint8_t x, uint8_t y)
 	else if(x == 6 && y == 0) // LDIR
 	{
 		/// TODO: test this block
-		_memory->write(getRegisterPair(RP_DE), _memory->read(getRegisterPair(RP_HL)));
+		_memory->write(getRegisterPair(RP_DE), readMemoryHL());
 		setRegisterPair(RP_DE, getRegisterPair(RP_DE)+1);
 		setRegisterPair(RP_HL, getRegisterPair(RP_HL)+1);
 		setRegisterPair(RP_BC, getRegisterPair(RP_BC)-1);
@@ -1085,7 +1127,7 @@ void CPU::bliOperation(uint8_t x, uint8_t y)
 	//
 	else if (x == 4 && y == 3) // OUTI
 	{
-		uint8_t value = _memory->read(getRegisterPair(RP_HL));
+		uint8_t value = readMemoryHL();
 		//slog << ldebug << hex << "OUTI : R_C="<< (uint16_t)_register[R_C] << " R_B=" << (uint16_t)_register[R_B] << " RP_HL=" << (uint16_t)getRegisterPair(2) << " val=" << (uint16_t)value << endl;
 		portCommunication(true, getRegister(R_C), value);
 
@@ -1104,7 +1146,7 @@ void CPU::bliOperation(uint8_t x, uint8_t y)
 	//
 	else if(x == 6 && y == 3) // OTIR
 	{
-		uint8_t value = _memory->read(getRegisterPair(RP_HL));
+		uint8_t value = readMemoryHL();
 		//slog << ldebug << hex << "OTIR : R_C="<< (uint16_t)_register[R_C] << " R_B=" << (uint16_t)_register[R_B] << " RP_HL=" << (uint16_t)getRegisterPair(2) << " val=" << (uint16_t)value << endl;
 		portCommunication(true, _register[R_C], value);
 
@@ -1169,6 +1211,32 @@ void CPU::restart(uint_fast8_t p)
 	slog << ldebug << "RST to " << hex << (uint16_t)(p) << endl;
 }
 
+uint8_t CPU::readMemoryHL() {
+	if (_useRegisterIX > 0) {
+		return _memory->read(_registerIX + retrieveIndexDisplacement());
+	} else if (_useRegisterIY > 0) {
+		return _memory->read(_registerIY + retrieveIndexDisplacement());
+	}
+	return _memory->read(getRegisterPair(RP_HL));
+}
+
+void CPU::writeMemoryHL(uint8_t iNewValue) {
+	if (_useRegisterIX > 0) {
+		return _memory->write(_registerIX + retrieveIndexDisplacement(), iNewValue);
+	} else if (_useRegisterIY > 0) {
+		return _memory->write(_registerIY + retrieveIndexDisplacement(), iNewValue);
+	}
+	_memory->write(getRegisterPair(RP_HL), iNewValue);
+}
+
+int8_t CPU::retrieveIndexDisplacement() {
+	if (!_displacementForIndexUsed) {
+		_displacementForIndexUsed = true;
+		_displacementForIndex = _memory->read(_pc++);
+	}
+	return _displacementForIndex;
+}
+
 // swap:
 void CPU::swapRegister(uint8_t code)
 {
@@ -1198,7 +1266,7 @@ void CPU::setRegister(uint8_t code, uint8_t value, bool alternate, bool useIndex
 {
 	if (code == 6) {
 		// TODO (IX/Y+d) for DD prefix
-		_memory->write(getRegisterPair(RP_HL), value);
+		writeMemoryHL(value);
 	} else if (code == R_H) {
 		if (!useIndex || (!_useRegisterIX && !_useRegisterIY)) {
 			_register[code] = value;
@@ -1308,7 +1376,7 @@ void CPU::setRegisterPair2(uint8_t code, uint16_t value, bool alternate)
 const uint8_t CPU::getRegister(uint8_t code, bool alternate, bool useIndex)
 {
 	if (code == 6) {
-		return _memory->read(getRegisterPair(RP_HL));
+		return readMemoryHL();
 	} else if (code == R_H) {
 		if (!useIndex || (!_useRegisterIX && !_useRegisterIY)) {
 			return _register[code];

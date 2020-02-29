@@ -10,12 +10,13 @@
 
 class Graphics;
 
-enum CONTROLLER_KEYS { CK_UP = 0, CK_DOWN = 1, CK_RIGHT = 2, CK_LEFT = 3, CK_FIREA = 4, CK_FIREB = 5 };
-
 class Inputs : public Singleton<Inputs>
 {
-
 public:
+    
+    enum JoypadId : size_t { kJoypad1 = 0, kJoypad2 = 1 };
+    enum ControllerKey : size_t { CK_UP = 0, CK_DOWN = 1, CK_RIGHT = 2, CK_LEFT = 3, CK_FIREA = 4, CK_FIREB = 5 };
+
     Inputs();
 
 
@@ -23,10 +24,10 @@ public:
     void captureEventsGame(sf::RenderWindow *app);
 
     // idController is 0 for Joypad 1 and 1 for Joypad 2
-    bool controllerKeyPressed(uint8_t idController, CONTROLLER_KEYS key);
+    bool controllerKeyPressed(JoypadId idController, ControllerKey key);
 
 private:
-    bool _controller[6];
+    bool _controller[2][6];
     sf::Keyboard::Key _userKeys[6];
     Debugger* _debugger;
     Graphics* _graphics;

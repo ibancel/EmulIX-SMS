@@ -92,6 +92,8 @@ private:
 	int _useRegisterIX;
 	int _useRegisterIY;
 	int8_t _cbDisplacement;
+	bool _displacementForIndexUsed;
+	int8_t _displacementForIndex;
 
 
 	inline bool isPrefixByte(uint8_t byte) const {
@@ -134,6 +136,14 @@ private:
 	inline void stopRegisterIY() {
 		_useRegisterIY = 0;
 	}
+
+	inline bool isIndexUsed() {
+		return (_useRegisterIX > 0) || (_useRegisterIY > 0);
+	}
+
+	uint8_t readMemoryHL();
+	void writeMemoryHL(uint8_t iNewValue);
+	int8_t retrieveIndexDisplacement();
 
 	// swaps:
 	void swapRegister(uint8_t code);

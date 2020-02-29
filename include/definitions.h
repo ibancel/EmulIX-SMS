@@ -19,7 +19,7 @@
 #define GRAPHIC_CRAM_SIZE 32
 #define GRAPHIC_REGISTER_SIZE 11
 
-#define MACHINE_MODEL 0 // 0: domestic (JP) / 1: export (US, EU, ...)
+#define MACHINE_MODEL 1 // 0: domestic (JP) / 1: export (US, EU, ...)
 #define MACHINE_VERSION 1 // 0: SMS1 / 1: SMS2
 
 #define NOT_IMPLEMENTED(string) SLOG_THROW(lwarning << std::dec << __FILE__ << "#" << __LINE__ << " NOT_IMPLEMENTED: " << string << std::endl);

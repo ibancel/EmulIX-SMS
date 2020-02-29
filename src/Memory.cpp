@@ -55,19 +55,19 @@ void Memory::write(uint16_t address, uint8_t value) {
 				NOT_IMPLEMENTED("Bank shifting");
 			}
 		} else if (address == Paging_Reg::kBank0) {
-			uint8_t nbCartridgeBlock = static_cast<uint16_t>(_cartridge->getSize()) / 0x4000;
+			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(0);
 		} else if (address == Paging_Reg::kBank1) {
-			uint8_t nbCartridgeBlock = static_cast<uint16_t>(_cartridge->getSize()) / 0x4000;
+			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(1);
 		} else if (address == Paging_Reg::kBank2) {
-			uint8_t nbCartridgeBlock = static_cast<uint16_t>(_cartridge->getSize()) / 0x4000;
+			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			if (nbCartridgeBlock > 0x0F) {
 				value &= ((nbCartridgeBlock & 0xF0) | 0x0F);
 			} else {
