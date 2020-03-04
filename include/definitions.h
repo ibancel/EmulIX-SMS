@@ -18,6 +18,7 @@
 #define GRAPHIC_VRAM_SIZE 16384
 #define GRAPHIC_CRAM_SIZE 32
 #define GRAPHIC_REGISTER_SIZE 11
+#define GRAPHIC_PRECISE_TIMING FALSE
 
 #define MACHINE_MODEL 1 // 0: domestic (JP) / 1: export (US, EU, ...)
 #define MACHINE_VERSION 1 // 0: SMS1 / 1: SMS2

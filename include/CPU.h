@@ -32,14 +32,16 @@ class CPU : public Singleton<CPU>
 
 public:
 
+	static constexpr double BaseFrequency = 3'580'000.0; // in Hz = cycle/s
+
 	CPU();
 	CPU(Memory *m, Graphics *g, Cartridge *c);
 
 	void init();
 	void reset();
 
-	void cycle();
-	resInstruction opcodeExecution(const uint8_t prefix, const uint8_t opcode);
+	int cycle();
+	int opcodeExecution(const uint8_t prefix, const uint8_t opcode);
 
 	void aluOperation(const uint8_t index, const uint8_t value);
 	void rotOperation(const uint8_t index, const uint8_t reg);
@@ -100,11 +102,11 @@ private:
 		return (byte == 0xCB || byte == 0xDD || byte == 0xED || byte == 0xFD);
 	}
 
-	void opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	void opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	void opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	void opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	void opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
 
 	bool condition(uint8_t code);
 
@@ -152,8 +154,8 @@ private:
 
 	// set:
 	void setRegister(uint8_t code, uint8_t value, bool alternate = false, bool useIndex = true);
-	void setRegisterPair(uint8_t code, uint16_t value, bool alternate = false);
-	void setRegisterPair2(uint8_t code, uint16_t value, bool alternate = false);
+	void setRegisterPair(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
+	void setRegisterPair2(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
 	inline void setFlagBit(F_NAME f, uint8_t value) {
 		if (value == 1) {
 			_registerFlag |= 1 << (uint8_t)f;
@@ -164,8 +166,8 @@ private:
 
 	// get:
 	const uint8_t getRegister(uint8_t code, bool alternate = false, bool useIndex = true);
-	uint16_t getRegisterPair(uint8_t code, bool alternate = false);
-	uint16_t getRegisterPair2(uint8_t code, bool alternate = false);
+	uint16_t getRegisterPair(uint8_t code, bool alternate = false, bool useIndex = true);
+	uint16_t getRegisterPair2(uint8_t code, bool alternate = false, bool useIndex = true);
 
 	inline bool getFlagBit(F_NAME f) const {
 		return (_registerFlag >> (uint8_t)f) & 1;

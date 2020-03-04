@@ -73,12 +73,15 @@ int main(int argc, char *argv[])
     chrono::duration<double, std::micro> intervalCycle;
     while (windowInfo.isOpen())
     {
+        int nbTStates = 0;
+
         inputs->captureEventsInfo(&windowInfo);
 
         if (debugger->manage(cpu->getProgramCounter()) == Debugger::State::kRunning) {
-            cpu->cycle();
+            nbTStates = cpu->cycle();
         } else {
-            //Log::printConsole = true;
+            Log::typeMin = Log::ALL;
+            Log::printConsole = true;
             //Log::printFile = true;
             std::this_thread::sleep_for(1ms);
         }
@@ -90,10 +93,13 @@ int main(int argc, char *argv[])
             g->drawGame();
         }
 
-        const uint8_t tState = 9;
+        //if (nbTStates == 0) {
+        //    nbTStates = 4;
+        //}
+
         do {
             intervalCycle = chrono::steady_clock::now() - chronoSync;
-        } while (intervalCycle.count() < tState * microsecondPerState);
+        } while (intervalCycle.count() < nbTStates * microsecondPerState);
         chronoSync = chrono::steady_clock::now();
     }
 

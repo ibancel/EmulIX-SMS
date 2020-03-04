@@ -24,6 +24,7 @@ class Graphics : public Singleton<Graphics>
 
 public:
 	static constexpr int DumpMode = 0;
+	static constexpr double PixelFrequency = 5'376'240.0;
 	static float RatioSize;
 
 	Graphics();
@@ -41,6 +42,8 @@ public:
 
 	void setWindowInfo(sf::RenderWindow *win);
 	void setWindowGame(sf::RenderWindow *win);
+
+	void dumpVram();
 
 	sf::RenderWindow* getWindowInfo() const { return _winInfo; }
 	sf::RenderWindow* getWindowGame() const { return _winGame; }
@@ -67,7 +70,9 @@ public:
 		}
 	}
 
-	void dumpVram();
+	inline void addCpuStates(int iNumberStates) {
+		_cpuStatesExecuted += iNumberStates;
+	}
 
 private:
 	Memory *_memory;
@@ -95,6 +100,8 @@ private:
 	uint16_t _vCounter;
 	uint8_t _lineInterruptCounter;
 	bool _lineInterruptFlag;
+
+	double _cpuStatesExecuted;
 
 	std::chrono::time_point<std::chrono::steady_clock> _pixelTimer;
 

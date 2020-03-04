@@ -13,7 +13,7 @@
 #include "definitions.h"
 
 #if DEBUG_MODE
-#define SLOG(x) slog << x;
+#define SLOG(x) slog << x << std::endl;
 #define SLOG_THROW(x) SLOG(x); throw std::runtime_error("not implemented");
 #define SLOG_NOENDL(x) slog << x;
 #else

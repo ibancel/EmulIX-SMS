@@ -46,6 +46,8 @@ Graphics::Graphics(Memory *m, sf::RenderWindow *winInfo)
 
 	timeCycle = 0;
 
+	_cpuStatesExecuted = 0;
+
 	_runningBarState = 0;
 	_infoPrintMode = 0;
 
@@ -185,8 +187,17 @@ void Graphics::drawInfo()
 
 void Graphics::drawGame()
 {
-	chrono::duration<double, std::milli> intervalPixelTimer = chrono::steady_clock::now() - _pixelTimer;
-	if (intervalPixelTimer.count() >= 1.0f/15720.0f/TIME_SCALE) { // TODO PAL/NTSC
+#if GRAPHIC_PRECISE_TIMING
+	double decimalPixelNumber = _cpuStatesExecuted * (Graphics::PixelFrequency / CPU::BaseFrequency);
+	int nbPixel = static_cast<int>(decimalPixelNumber);
+	_cpuStatesExecuted = (decimalPixelNumber - nbPixel) / (Graphics::PixelFrequency / CPU::BaseFrequency);
+# else
+	chrono::duration<double, std::micro> intervalPixelTimer = chrono::steady_clock::now() - _pixelTimer;
+	int nbPixel = intervalPixelTimer.count() / ((1.0 / 5.37624) / TIME_SCALE);
+#endif
+
+	for (; nbPixel > 0; --nbPixel) {
+	//if (intervalPixelTimer.count() >= (1.0f/15720.0f/TIME_SCALE)) { // TODO PAL/NTSC
 		//cout << dec << intervalPixelTimer.count() << " | " << (uint16_t)_hCounter << " | " << (uint16_t)_vCounter << endl;
 		_hCounter++;
 		if (_hCounter >= 342) {
