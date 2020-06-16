@@ -5,7 +5,7 @@
 class Breakpoint
 {
 public:
-	enum class Type { kAddress, kNumInstruction };
+	enum class Type { kAddress, kNumInstruction, kNumState };
 
 	Breakpoint(const Breakpoint::Type iType, const uint_fast64_t iValue);
 	~Breakpoint() = default;

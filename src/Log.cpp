@@ -46,7 +46,7 @@ bool Log::isUniqueType(int16_t typeFlag)
 {
 	int oneOccurence = 0;
 	for (int i = 0; i < 16; i++) {
-		if (getBit8(typeFlag, i) == 1) {
+		if (getBit8(typeFlag, i) == 1u) {
 			oneOccurence++;
 		}
 	}

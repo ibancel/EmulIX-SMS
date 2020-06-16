@@ -3,11 +3,11 @@
 
 #include <iostream>
 
-#define DEBUG_MODE _DEBUG
+#define DEBUG_MODE false || _DEBUG
 
 #define BREAKPOINT_STYLE 1 // 0 for before execution, 1 for after
 
-#define TIME_SCALE 1.00f
+#define TIME_SCALE 1.00
 
 #define MEMORY_SIZE 65536
 #define REGISTER_SIZE 8
@@ -18,12 +18,22 @@
 #define GRAPHIC_VRAM_SIZE 16384
 #define GRAPHIC_CRAM_SIZE 32
 #define GRAPHIC_REGISTER_SIZE 11
-#define GRAPHIC_PRECISE_TIMING FALSE
+#define GRAPHIC_PRECISE_TIMING true
+#define GRAPHIC_THREADING true
 
 #define MACHINE_MODEL 1 // 0: domestic (JP) / 1: export (US, EU, ...)
 #define MACHINE_VERSION 1 // 0: SMS1 / 1: SMS2
 
 #define NOT_IMPLEMENTED(string) SLOG_THROW(lwarning << std::dec << __FILE__ << "#" << __LINE__ << " NOT_IMPLEMENTED: " << string << std::endl);
+
+constexpr long double BaseFrequency = 10'738'635.0 * TIME_SCALE; // in Hz = cycle/s (10'738'580.0 OR 10'738'635.0?)
+constexpr int DumpMode = 0;
+
+namespace VDP {
+    enum StatusBit { S_F = 7, S_OVR = 6, S_C = 5 };
+    enum ColorBank { kFirst = 0, kSecond = 16 };
+}
+enum class SpriteSize : uint8_t { k8 = 0, k16 = 1 };
 
 
 const std::string OPCODE_NAME[] = {
@@ -98,6 +108,8 @@ inline uint8_t getBit8(uint8_t value, uint8_t pos) {
 // newBit can be 0 or 1 else can be true or false
 void setBit8(uint8_t* value, uint8_t pos, bool newBit);
 
+void setBit16(uint16_t* value, uint8_t pos, bool newBit);
+
 
 // extract 8 lowest bits of a 16 bits value
 inline uint8_t getLowerByte(uint16_t value) {
@@ -105,7 +117,7 @@ inline uint8_t getLowerByte(uint16_t value) {
 }
 
 inline void setLowerByte(uint16_t &ioToSet, uint8_t byte) {
-    ioToSet = (ioToSet &0xFF00) | (byte&0x00FF);
+    ioToSet = (ioToSet & 0xFF00) | byte;
 }
 
 // extract 8 hight bits of a 16 bits value
@@ -114,7 +126,7 @@ inline uint8_t getHigherByte(uint16_t value) {
 }
 
 inline void setHigherByte(uint16_t& ioToSet, uint8_t byte) {
-    ioToSet = (ioToSet & 0x00FF) | (byte & 0xFF00);
+    ioToSet = (ioToSet & 0x00FF) | (byte<<8);
 }
 
 

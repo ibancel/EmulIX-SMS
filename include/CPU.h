@@ -24,6 +24,8 @@ enum R_NAME { R_B = 0, R_C = 1, R_D = 2, R_E = 3, R_H = 4, R_L = 5, R_A = 7 };
 enum RP_NAME { RP_BC = 0, RP_DE = 1, RP_HL = 2, RP_SP = 3 };
 enum RP2_NAME { RP2_BC = 0, RP2_DE = 1, RP2_HL = 2, RP2_AF = 3 };
 enum F_NAME { F_C = 0, F_N = 1, F_P = 2, F_F3 = 3, F_H = 4, F_F5 = 5, F_Z = 6, F_S = 7 };
+enum F_NAME_MASK { F_C_MASK = 0x01, F_N_MASK = 0x02, F_P_MASK = 0x04, F_F3_MASK = 0x08, F_H_MASK = 0x10, F_F5_MASK = 0x20, F_Z_MASK = 0x40, F_S_MASK = 0x80
+};
 
 class Graphics;
 
@@ -32,7 +34,8 @@ class CPU : public Singleton<CPU>
 
 public:
 
-	static constexpr double BaseFrequency = 3'580'000.0; // in Hz = cycle/s
+	static constexpr double Frequency = BaseFrequency / 3.0; // in Hz = cycle/s
+	static constexpr long double MicrosecondPerState = 1.0 / (Frequency/1'000'000.0);
 
 	CPU();
 	CPU(Memory *m, Graphics *g, Cartridge *c);
@@ -71,11 +74,11 @@ private:
     // special registers
 	uint16_t _pc;
 	uint16_t _sp;
-	uint8_t _stack[MEMORY_SIZE]; // size unkown so very large size !
 	uint16_t _registerR;
 	uint16_t _registerI;
 	uint16_t _registerIX;
 	uint16_t _registerIY;
+	uint8_t _registerAluTemp;
 
 	uint8_t _register[REGISTER_SIZE];
 	uint8_t _registerA[REGISTER_SIZE]; // Alternate register
@@ -97,6 +100,8 @@ private:
 	bool _displacementForIndexUsed;
 	int8_t _displacementForIndex;
 
+	int _cycleCount;
+
 
 	inline bool isPrefixByte(uint8_t byte) const {
 		return (byte == 0xCB || byte == 0xDD || byte == 0xED || byte == 0xFD);
@@ -110,11 +115,13 @@ private:
 
 	bool condition(uint8_t code);
 
-	void bliOperation(uint8_t x, uint8_t y);
+	int bliOperation(uint8_t x, uint8_t y);
 
-	void interrupt(bool nonMaskable = false);
+	int interrupt(bool nonMaskable = false);
 
 	void restart(uint_fast8_t p);
+
+	void addNbStates(int iNbStates);
 
 	inline void useRegisterIX() {
 		_useRegisterIX = 2;
@@ -143,8 +150,8 @@ private:
 		return (_useRegisterIX > 0) || (_useRegisterIY > 0);
 	}
 
-	uint8_t readMemoryHL();
-	void writeMemoryHL(uint8_t iNewValue);
+	uint8_t readMemoryHL(bool iUseIndex = true);
+	void writeMemoryHL(uint8_t iNewValue, bool iUseIndex = true);
 	int8_t retrieveIndexDisplacement();
 
 	// swaps:
@@ -157,10 +164,33 @@ private:
 	void setRegisterPair(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
 	void setRegisterPair2(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
 	inline void setFlagBit(F_NAME f, uint8_t value) {
-		if (value == 1) {
-			_registerFlag |= 1 << (uint8_t)f;
+		if (value != 0) {
+			_registerFlag |= 1 << static_cast<uint_fast8_t>(f);
 		} else {
-			_registerFlag &= ~(1 << (uint8_t)f);
+			_registerFlag &= ~(1 << static_cast<uint_fast8_t>(f));
+		}
+	}
+	void setFlagMask(uint8_t mask, bool value) {
+		if (value) {
+			_registerFlag |= mask;
+		} else {
+			_registerFlag &= ~mask;
+		}
+	}
+	void setFlagUndoc(uint8_t value) {
+		setFlagBit(F_F3, value & 0x08);
+		setFlagBit(F_F5, value & 0x20);
+	}
+
+	void setCBRegisterWithCopy(uint8_t iRegister, uint8_t iValue) {
+		if (_useRegisterIX) {
+			_memory->write(_registerIX + _displacementForIndex, iValue);
+		} else if (_useRegisterIY) {
+			_memory->write(_registerIY + _displacementForIndex, iValue);
+		}
+
+		if (!isIndexUsed() || iRegister != 6) {
+			setRegister(iRegister, iValue, false, false);
 		}
 	}
 
@@ -168,6 +198,10 @@ private:
 	const uint8_t getRegister(uint8_t code, bool alternate = false, bool useIndex = true);
 	uint16_t getRegisterPair(uint8_t code, bool alternate = false, bool useIndex = true);
 	uint16_t getRegisterPair2(uint8_t code, bool alternate = false, bool useIndex = true);
+
+	inline uint8_t getAluTempByte() {
+		return _registerAluTemp + _register[R_A];
+	}
 
 	inline bool getFlagBit(F_NAME f) const {
 		return (_registerFlag >> (uint8_t)f) & 1;

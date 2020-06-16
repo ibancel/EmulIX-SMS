@@ -29,6 +29,15 @@ void setBit8(uint8_t* value, uint8_t pos, bool newBit)
 		*value |= 1 << (uint8_t)pos;
 }
 
+void setBit16(uint16_t* value, uint8_t pos, bool newBit)
+{
+	if (!newBit) {
+		*value &= ~(1 << (uint8_t)pos);
+	} else {
+		*value |= 1 << (uint8_t)pos;
+	}
+}
+
 bool nbBitsEven(uint8_t byte)
 {
 	byte ^= byte >> 4;

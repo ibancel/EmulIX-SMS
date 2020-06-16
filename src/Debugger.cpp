@@ -1,8 +1,10 @@
 #include "Debugger.h"
 
 #include "Breakpoint.h"
+#include "Log.h"
+#include "Memory.h"
 
-Debugger::Debugger() : _instructionCounter{ 0 }, _requestStep{ false }, _actualState{ State::kRunning }
+Debugger::Debugger() : _instructionCounter{ 0 }, _cycleCounter{ 5 }, _requestStep{ false }, _actualState{ State::kRunning }
 {
 
 }
@@ -10,6 +12,7 @@ Debugger::Debugger() : _instructionCounter{ 0 }, _requestStep{ false }, _actualS
 void Debugger::reset()
 {
 	_instructionCounter = 0;
+	_cycleCounter = 0;
 	_requestStep = false;
 	_actualState = State::kRunning;
 }
@@ -18,17 +21,48 @@ Debugger::State Debugger::manage(uint_fast64_t iCurrentAddr)
 {
 	_instructionCounter++;
 
-	for (const std::unique_ptr<Breakpoint>& aBreakpointPtr : _breakpointList) {
-		Breakpoint *breakpoint = aBreakpointPtr.get();
-		if (!breakpoint) {
-			continue;
-		}
-		if (breakpoint->getType() == Breakpoint::Type::kNumInstruction && breakpoint->getValue() == _instructionCounter) {
-			pause();
-		} else if (breakpoint->getType() == Breakpoint::Type::kAddress && breakpoint->getValue() == iCurrentAddr) {
-			pause();
+	if (_actualState == State::kRunning) {
+		for (std::vector<std::unique_ptr<Breakpoint>>::iterator it = _breakpointList.begin(); it != _breakpointList.end();) {
+			Breakpoint* breakpoint = it->get();
+			if (!breakpoint) {
+				++it;
+				continue;
+			}
+
+			bool toErase = false;
+			if (breakpoint->getType() == Breakpoint::Type::kNumInstruction && breakpoint->getValue() == _instructionCounter) {
+				pause();
+			} else if (breakpoint->getType() == Breakpoint::Type::kAddress && breakpoint->getValue() == iCurrentAddr) {
+				pause();
+			} else if (breakpoint->getType() == Breakpoint::Type::kNumState && breakpoint->getValue() <= _cycleCounter) {
+				pause();
+				toErase = true;
+			}
+
+			if (toErase) {
+				_breakpointList.erase(it);
+			} else {
+				++it;
+			}
 		}
 	}
+
+	if (_actualState == State::kRunning) {
+		for (std::unique_ptr<Watcher>& watcher : _watcherList) {
+			if (!watcher) {
+				continue;
+			}
+
+			uint8_t memoryValue = Memory::Instance()->read(watcher->getAddress());
+			if (memoryValue != watcher->getCurrentValue()) {
+				pause();
+				SLOG(ldebug << "Watcher " << watcher->getAddress() << " (" << _cycleCounter << ")");
+				watcher->setCurrentValue(memoryValue);
+			}
+		}
+	}
+
+
 
 	if (_actualState == State::kPaused && _requestStep) {
 		_requestStep = false;
@@ -71,6 +105,10 @@ void Debugger::step()
 	_requestStep = true;
 }
 
+void Debugger::addNumberCycle(uint_fast64_t iTstatesCycle)
+{
+	_cycleCounter += iTstatesCycle;
+}
 
 Debugger::State Debugger::getState() const
 {

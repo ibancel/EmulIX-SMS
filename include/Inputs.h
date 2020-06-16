@@ -26,11 +26,24 @@ public:
     // idController is 0 for Joypad 1 and 1 for Joypad 2
     bool controllerKeyPressed(JoypadId idController, ControllerKey key);
 
+    void switchDrawSprite();
+    void switchInfoDisplayMode();
+
+    bool getDrawSprite();
+    int getInfoDisplayMode();
+
+    bool isStopRequested();
+
 private:
-    bool _controller[2][6];
     sf::Keyboard::Key _userKeys[6];
     Debugger* _debugger;
     Graphics* _graphics;
+
+    bool _controller[2][6];
+    bool _drawSprite;
+    bool _isStopRequested;
+
+    int _infoDisplayMode;
 };
 
 #endif

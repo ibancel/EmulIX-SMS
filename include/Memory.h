@@ -26,6 +26,8 @@ public:
 
 	uint8_t read(uint16_t address);
 
+	void dumpRam();
+
 private:
 	Cartridge* _cartridge;
 	uint8_t _memory[MEMORY_SIZE]; // Bank 0,1,2 empty here

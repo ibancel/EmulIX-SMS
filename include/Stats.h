@@ -7,7 +7,6 @@ class Stats
 {
 
 public:
-	static float opcodeBySec;
 	static std::string opcodeArray[256];
 	static int opcodeOccur[256];
 
@@ -15,8 +14,12 @@ public:
 
 	static int *getMost();
 
-private:
+	static void addExecutionStat(uint8_t numberTStates, long double microsecondExecutionTime);
+	static double getCpuExecSpeed();
 
+private:
+	static float opcodeBySec;
+	static long double cpuExecSpeed;
 };
 
 #endif

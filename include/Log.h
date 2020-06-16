@@ -10,15 +10,16 @@
 
 #include <stdexcept>
 
+#include "EmulatorException.h"
 #include "definitions.h"
 
 #if DEBUG_MODE
 #define SLOG(x) slog << x << std::endl;
-#define SLOG_THROW(x) SLOG(x); throw std::runtime_error("not implemented");
+#define SLOG_THROW(x) SLOG(x); throw EMULATOR_EXCEPTION("not implemented");
 #define SLOG_NOENDL(x) slog << x;
 #else
 #define SLOG(x) ;
-#define SLOG_THROW(x) slog << x << std::endl; throw std::runtime_error("not implemented");
+#define SLOG_THROW(x) slog << x << std::endl; throw EMULATOR_EXCEPTION("not implemented");
 #define SLOG_NOENDL(x) ;
 #endif
 
@@ -104,7 +105,6 @@ public:
 
 
 	static void print(std::string str, type typeLog = type::NORMAL);
-	//static void print(std::stringstream str, type typeLog = type::NORMAL);
 
 	static void saveToFile(std::string filename);
 
@@ -123,20 +123,6 @@ private:
 };
 
 extern Log slog;
-/*
-inline Log& operator<<(Log& l, const char* str)
-{
-	Log::print(std::string(str));
-	return l;
-}
-
-inline Log& operator<<(Log& l, std::ostream &stream)
-{
-	std::stringstream ss;
-	ss << stream;
-	Log::print(ss.str());
-	return l;
-}*/
 
 class LogNormal { };
 class LogDebug { };

@@ -1,8 +1,13 @@
 #include "Stats.h"
 
+#include "definitions.h"
+#include "CPU.h"
+
 using namespace std;
 
 float Stats::opcodeBySec = 0.0f;
+long double Stats::cpuExecSpeed = 0.0;
+
 int Stats::opcodeOccur[];
 
 void Stats::add(uint8_t prefix, uint8_t opcode)
@@ -38,4 +43,18 @@ int* Stats::getMost()
 
 
 	return res;
+}
+
+
+void Stats::addExecutionStat(uint8_t numberTStates, long double microsecondExecutionTime)
+{
+	if (microsecondExecutionTime <= 0) {
+		microsecondExecutionTime = numeric_limits<double>::lowest();
+	}
+	cpuExecSpeed = 0.99995 * cpuExecSpeed + 0.00005 * (microsecondExecutionTime / (numberTStates * CPU::MicrosecondPerState));
+}
+
+double Stats::getCpuExecSpeed()
+{
+	return cpuExecSpeed;
 }

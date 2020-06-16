@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <iomanip>
 
 #include "definitions.h"
 #include "Log.h"
@@ -101,6 +102,25 @@ uint8_t Memory::read(uint16_t address) {
 		} else {
 			NOT_IMPLEMENTED("Paging read");
 			return 0;
+		}
+	}
+}
+
+void Memory::dumpRam()
+{
+	if (DumpMode == 0) {
+		std::ofstream file("ram_dump.txt", std::ios_base::out | std::ios_base::binary);
+		for (int i = 0; i < MEMORY_SIZE; i++) {
+			file << read(i);
+		}
+		file.close();
+	} else if (DumpMode == 1) {
+		std::ofstream file("ram_dump.txt", std::ios_base::out);
+		for (int i = 0; i < MEMORY_SIZE; i++) {
+			file << std::hex << std::setfill('0') << std::uppercase << std::setw(2) << (uint16_t)(read(i)) << " ";
+			if (i != 0 && (i % 16) == 15) {
+				file << std::endl;
+			}
 		}
 	}
 }
