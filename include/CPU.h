@@ -74,10 +74,10 @@ private:
     // special registers
 	uint16_t _pc;
 	uint16_t _sp;
-	uint16_t _registerR;
-	uint16_t _registerI;
 	uint16_t _registerIX;
 	uint16_t _registerIY;
+	uint8_t _registerR;
+	uint8_t _registerI;
 	uint8_t _registerAluTemp;
 
 	uint8_t _register[REGISTER_SIZE];
@@ -153,6 +153,7 @@ private:
 	uint8_t readMemoryHL(bool iUseIndex = true);
 	void writeMemoryHL(uint8_t iNewValue, bool iUseIndex = true);
 	int8_t retrieveIndexDisplacement();
+	void incrementRefreshRegister();
 
 	// swaps:
 	void swapRegister(uint8_t code);

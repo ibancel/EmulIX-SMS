@@ -48,9 +48,9 @@ int* Stats::getMost()
 
 void Stats::addExecutionStat(uint8_t numberTStates, long double microsecondExecutionTime)
 {
-	if (microsecondExecutionTime <= 0) {
-		microsecondExecutionTime = numeric_limits<double>::lowest();
-	}
+	//if (microsecondExecutionTime <= 0) {
+	//	microsecondExecutionTime = numeric_limits<double>::lowest();
+	//}
 	cpuExecSpeed = 0.99995 * cpuExecSpeed + 0.00005 * (microsecondExecutionTime / (numberTStates * CPU::MicrosecondPerState));
 }
 
