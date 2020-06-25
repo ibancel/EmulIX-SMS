@@ -451,10 +451,15 @@ void GraphicsThread::drawLine(int line)
 	int graphicMode = _graphicMode;
 	if (int y = line; y < ImageHeight)
 	{
+		const uint8_t verticalScroll = getRegister(9);
 		for (int x = 0; x < ImageWidth; x++)
 		{
-			const uint_fast8_t characterY = y / 8;
-			const uint8_t rowPatternIndex = (y - (static_cast<uint16_t>(characterY) << 3)) << 2; // "<<" for faster multiplication
+			const bool allowVScroll = !getBit8(getRegister(0), 7) || (x < 192);
+			const uint8_t vTileScroll = allowVScroll ? (verticalScroll >> 3) : 0;
+			const uint8_t vFineScroll = allowVScroll ? (verticalScroll & 0b0000'0111) : 0;
+
+			const uint_fast8_t characterY = (vTileScroll + ((y + vFineScroll) / 8)) % 28; // TODO: 240-line
+			const uint8_t rowPatternIndex = ((y+vFineScroll) % 8) * 4;
 			if (graphicMode == 0)
 			{
 				const uint_fast8_t characterX = x / 8;
@@ -485,38 +490,47 @@ void GraphicsThread::drawLine(int line)
 			} 
 			else if (graphicMode == 4)
 			{
-				const uint_fast8_t characterX = x / 8;
-				const uint_fast16_t characterPosition = characterX + characterY * 32;
-				uint_fast16_t wordName = (getNameTable(characterPosition * 2)[1] << 8) | getNameTable(characterPosition * 2)[0];
-				uint16_t patternIndex = (wordName & 0x1FF) * 32; // "<<5" = "*32"
+				const uint8_t horizontalScroll = getRegister(8);
+				const bool allowHScroll = !getBit8(getRegister(0), 6) || (x > 15);
+				const uint8_t hTileScroll = allowHScroll ? (horizontalScroll >> 3) : 0;
+				const uint8_t hFineScroll = allowHScroll ? (horizontalScroll & 0b0000'0111) : 0;
 
-				wordName >>= 9; // Care about using it in the following lines
-				uint_fast8_t flipH = wordName & 1;
-				wordName >>= 1;
-				uint_fast8_t flipV = wordName & 1;
-				wordName >>= 1;
-				uint_fast8_t paletteSelect = wordName & 1;
-				wordName >>= 1;
-				uint_fast8_t priority = wordName & 1;
+				if (allowHScroll && getBit8(getRegister(0), 5) && x < 8) {
+					_drawImage.setPixel(x, y, byteToSfmlColor(getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()], true));
+				} else {
+					const uint_fast8_t characterX = ((32 - hTileScroll) + ((x - hFineScroll) / 8)) % 32;
+					const uint_fast16_t characterPosition = characterX + characterY * 32;
+					uint_fast16_t wordName = (getNameTable(characterPosition * 2)[1] << 8) | getNameTable(characterPosition * 2)[0];
+					uint16_t patternIndex = (wordName & 0x1FF) * 32;
 
-				uint8_t const* const pattern = getPatternGeneratorMode4(patternIndex);
-				const uint8_t columnPatternIndex = 7 - (x - (static_cast<uint16_t>(characterX) << 3));
-				uint8_t columnPatternIndexFlipped = columnPatternIndex;
-				uint8_t rowPatternIndexFlipped = rowPatternIndex;
+					wordName >>= 9; // Care about using it in the following lines
+					uint_fast8_t flipH = wordName & 1;
+					wordName >>= 1;
+					uint_fast8_t flipV = wordName & 1;
+					wordName >>= 1;
+					uint_fast8_t paletteSelect = wordName & 1;
+					wordName >>= 1;
+					uint_fast8_t priority = wordName & 1;
 
-				if (flipH) {
-					columnPatternIndexFlipped = 7 - columnPatternIndex;
+					uint8_t const* const pattern = getPatternGeneratorMode4(patternIndex);
+					const uint8_t columnPatternIndex = 7 - ((x - hFineScroll) % 8);
+					uint8_t columnPatternIndexFlipped = columnPatternIndex;
+					uint8_t rowPatternIndexFlipped = rowPatternIndex;
+
+					if (flipH) {
+						columnPatternIndexFlipped = 7 - columnPatternIndex;
+					}
+					if (flipV) {
+						rowPatternIndexFlipped = ((1 * 8) - 1) * 4 - rowPatternIndex;
+					}
+					uint8_t selectedColor = getBit8(pattern[rowPatternIndexFlipped], columnPatternIndexFlipped);
+					selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 1], columnPatternIndexFlipped) << 1;
+					selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 2], columnPatternIndexFlipped) << 2;
+					selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 3], columnPatternIndexFlipped) << 3;
+
+					uint_fast8_t colorByte = getColorTable(paletteSelect << 4)[selectedColor];
+					_drawImage.setPixel(x, y, byteToSfmlColor(colorByte, true));
 				}
-				if (flipV) {
-					rowPatternIndexFlipped = ((1 * 8)-1)*4 - rowPatternIndex;
-				}
-				uint8_t selectedColor = getBit8(pattern[rowPatternIndexFlipped], columnPatternIndexFlipped);
-				selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 1], columnPatternIndexFlipped) << 1;
-				selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 2], columnPatternIndexFlipped) << 2;
-				selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 3], columnPatternIndexFlipped) << 3;
-
-				uint_fast8_t colorByte = getColorTable(paletteSelect << 4)[selectedColor];
-				_drawImage.setPixel(x, y, byteToSfmlColor(colorByte, true));
 			} 
 			else
 			{				
