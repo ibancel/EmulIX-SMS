@@ -270,7 +270,7 @@ void GraphicsThread::drawGame()
 				_tempLineRegister = getRegister(0xA);
 				_lineInterruptCounter = _tempLineRegister;
 			}
-			if (_vCounter == 192) {
+			if (_vCounter == 193) {
 				setStatusRegisterBit(VDP::S_F, 1);
 				drawFrame();
 				_frameCounter++;

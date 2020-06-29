@@ -249,26 +249,27 @@ void CPU::aluOperation(const uint8_t index, const uint8_t value)
 		// TODO: ADD act the same but with carry = 0
 		int8_t registerValue = _register[R_A];
 		int8_t addOp = value + getFlagBit(F_C);
-		int8_t addOverflow = (value == 0x7F && getFlagBit(F_C));
+		int8_t addOpCarry = ((value == 0xFF) && getFlagBit(F_C));
 		int8_t sum = (int8_t)(registerValue + addOp);
 		setFlagBit(F_S, (sum < 0));
 		setFlagBit(F_Z, (sum == 0));
 		setFlagBit(F_H, (((_register[R_A] & 0xF) + (addOp & 0xF)) > 0xF));
-		setFlagBit(F_P, addOverflow || (sign8(registerValue) == sign8(addOp) && sign8(addOp) != sign8(sum)));
+		setFlagBit(F_P, addOpCarry || (sign8(registerValue) == sign8(addOp) && sign8(addOp) != sign8(sum)));
 		setFlagBit(F_N, 0);
-		setFlagBit(F_C, addOverflow || (sign8(registerValue) == sign8(addOp) && sign8(addOp) != sign8(sum)));
+		setFlagBit(F_C, addOpCarry || (static_cast<uint8_t>(sum) < static_cast<uint8_t>(registerValue)));
 		setFlagUndoc(sum);
 
 		_register[R_A] = sum;
 	}
 	else if(index == 2) // SUB
 	{
-	    /// TODO verify overflow
 		uint8_t result = (uint8_t)(_register[R_A] - value);
+		bool carryOut = value > _register[R_A];
+		bool carryIn = (value & 0x7F) > (_register[R_A] & 0x7F);
 		setFlagBit(F_S, ((int8_t)(result) < 0));
 		setFlagBit(F_Z, (result == 0));
 		setFlagBit(F_H, ((_register[R_A] & 0xF) < (value & 0xF)));
-		setFlagBit(F_P, ((_register[R_A]>>7)==(value>>7) && (value>>7)!=(result>>7))); // ?
+		setFlagBit(F_P, (carryIn != carryOut)); // From UM0080 doc
 		setFlagBit(F_N, 1);
 		setFlagBit(F_C, (result > _register[R_A])); // ?
 		setFlagUndoc(result);
@@ -287,7 +288,10 @@ void CPU::aluOperation(const uint8_t index, const uint8_t value)
 		setFlagBit(F_H, ((registerValue & 0xF) < (minusOp & 0xF)));
 		setFlagBit(F_P, (sign8(registerValue) != sign8(result)) && (sign8(minusOp) == sign8(result))); // verified
 		setFlagBit(F_C, minusOverflow || (result > registerValue));
+		setFlagBit(F_N, 1);
 		setFlagUndoc(result);
+
+		_register[R_A] = result;
 	}
 	else if(index == 4) // AND
     {
@@ -336,8 +340,8 @@ void CPU::aluOperation(const uint8_t index, const uint8_t value)
 
 		SLOG(ldebug << "CP(" << hex << (uint16_t)_register[R_A] << "," << (uint16_t)value << "): " << (uint16_t)(sum == 0));
 	}
-	//
-	else {
+	else
+	{
 		slog << lwarning << "ALU " << (uint16_t)index << " is not implemented" << endl;
 	}
 }
@@ -707,7 +711,7 @@ int CPU::opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		setRegister(R_A, value);
 
 		setFlagBit(F_Z, value == 0);
-		setFlagBit(F_H, 0); // to verify
+		setFlagBit(F_H, (!nBit && ((value&0x0F)>9)) || (nBit && hBit && ((value&0x0F)<6))); // to verify (or 0 as before?)
 		setFlagBit(F_C, newCBit);
 		setFlagBit(F_S, getBit8(value, 7));
 		setFlagBit(F_P, nbBitsEven(value));
@@ -988,6 +992,7 @@ int CPU::opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 			setFlagBit(F_H, 0);
 			setFlagBit(F_P, nbBitsEven(value));
 			setFlagBit(F_N, 0);
+			setFlagUndoc(value);
 			setCBRegisterWithCopy(z, value);
 			
 			if (_useRegisterIX || _useRegisterIY) {
@@ -1008,6 +1013,7 @@ int CPU::opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 			setFlagBit(F_H, 0);
 			setFlagBit(F_P, nbBitsEven(value));
 			setFlagBit(F_N, 0);
+			setFlagUndoc(value);
 			setCBRegisterWithCopy(z, value);
 
 			if (_useRegisterIX || _useRegisterIY) {
@@ -1338,6 +1344,7 @@ int CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
         setFlagBit(F_H, 0);
         setFlagBit(F_P, nbBitsEven(_register[R_A]));
         setFlagBit(F_N, 0);
+		setFlagUndoc(getRegister(R_A));
 
 		nbTStates = 18;
     }
@@ -1352,6 +1359,7 @@ int CPU::opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q)
 		setFlagBit(F_H, 0);
 		setFlagBit(F_P, nbBitsEven(_register[R_A]));
 		setFlagBit(F_N, 0);
+		setFlagUndoc(getRegister(R_A));
 
 		nbTStates = 18;
 	}
@@ -1492,8 +1500,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, 0);
 		setFlagBit(F_N, 0);
 		setFlagBit(F_P, getRegisterPair(RP_BC) != 0);
-		setFlagBit(F_F5, getBit8(getAluTempByte(), 1));
-		setFlagBit(F_F3, getBit8(getAluTempByte(), 3));
+		setFlagUndocMethod2(getAluTempByte());
 
 		nbTStates = 16;
 	}
@@ -1509,8 +1516,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, 0);
 		setFlagBit(F_N, 0);
 		setFlagBit(F_P, getRegisterPair(RP_BC) != 0);
-		setFlagBit(F_F5, getBit8(getAluTempByte(), 1));
-		setFlagBit(F_F3, getBit8(getAluTempByte(), 3));
+		setFlagUndocMethod2(getAluTempByte());
 
 		nbTStates = 16;
 	}
@@ -1533,8 +1539,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, 0);
 		setFlagBit(F_N, 0);
 		setFlagBit(F_P, getRegisterPair(RP_BC) != 0);
-		setFlagBit(F_F5, getBit8(getAluTempByte(), 1));
-		setFlagBit(F_F3, getBit8(getAluTempByte(), 3));
+		setFlagUndocMethod2(getAluTempByte());
 	}
 	else if (y == 0 && x == 7) // LDDR
 	{
@@ -1555,8 +1560,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, 0);
 		setFlagBit(F_N, 0);
 		setFlagBit(F_P, getRegisterPair(RP_BC) != 0);
-		setFlagBit(F_F5, getBit8(getAluTempByte(), 1));
-		setFlagBit(F_F3, getBit8(getAluTempByte(), 3));
+		setFlagUndocMethod2(getAluTempByte());
 	}
 	else if (y == 1 && x == 4) // CPI
 	{
@@ -1571,7 +1575,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, ((getRegister(R_A) & 0xF) < (memoryValue & 0xF)));
 		setFlagBit(F_P, (getRegisterPair(RP_BC) != 0));
 		setFlagBit(F_N, 1);
-		setFlagUndoc(result - static_cast<uint8_t>(getFlagBit(F_H)));
+		setFlagUndocMethod2(result - static_cast<uint8_t>(getFlagBit(F_H)));
 		nbTStates = 16;
 	}
 	else if (y == 1 && x == 5) // CPD
@@ -1587,7 +1591,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, ((getRegister(R_A) & 0xF) < (memoryValue & 0xF)));
 		setFlagBit(F_P, (getRegisterPair(RP_BC)!=0));
 		setFlagBit(F_N, 1);
-		setFlagUndoc(result - static_cast<uint8_t>(getFlagBit(F_H)));
+		setFlagUndocMethod2(result - static_cast<uint8_t>(getFlagBit(F_H)));
 		nbTStates = 16;
 	}
 	else if (y == 1 && x == 6) // CPIR
@@ -1598,7 +1602,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setRegisterPair(RP_HL, getRegisterPair(RP_HL) + 1);
 		setRegisterPair(RP_BC, getRegisterPair(RP_BC) - 1);
 
-		if (getRegisterPair(RP_BC) != 0 && getRegister(R_A) != 0) {
+		if (getRegisterPair(RP_BC) != 0 && result != 0) {
 			nbTStates = 21;
 			_pc -= 2;
 		} else {
@@ -1610,8 +1614,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, ((getRegister(R_A) & 0xF) < (memoryValue & 0xF)));
 		setFlagBit(F_P, (getRegisterPair(RP_BC) != 0));
 		setFlagBit(F_N, 1);
-		setFlagUndoc(result - static_cast<uint8_t>(getFlagBit(F_H)));
-		nbTStates = 16;
+		setFlagUndocMethod2(result - static_cast<uint8_t>(getFlagBit(F_H)));
 	}
 	else if (y == 1 && x == 7) // CPDR
 	{
@@ -1621,7 +1624,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setRegisterPair(RP_HL, getRegisterPair(RP_HL) - 1);
 		setRegisterPair(RP_BC, getRegisterPair(RP_BC) - 1);
 
-		if (getRegisterPair(RP_BC) != 0 && getRegister(R_A) != 0) {
+		if (getRegisterPair(RP_BC) != 0 && result != 0) {
 			nbTStates = 21;
 			_pc -= 2;
 		} else {
@@ -1633,8 +1636,7 @@ int CPU::bliOperation(uint8_t x, uint8_t y)
 		setFlagBit(F_H, ((getRegister(R_A) & 0xF) < (memoryValue & 0xF)));
 		setFlagBit(F_P, (getRegisterPair(RP_BC) != 0));
 		setFlagBit(F_N, 1);
-		setFlagUndoc(result - static_cast<uint8_t>(getFlagBit(F_H)));
-		nbTStates = 16;
+		setFlagUndocMethod2(result - static_cast<uint8_t>(getFlagBit(F_H)));
 	}
 	//
 	else if (y == 3 && x == 4) // OUTI

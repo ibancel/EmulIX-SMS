@@ -17,8 +17,9 @@ class CPU;
 class Graphics : public Singleton<Graphics>
 {
 public:
-	static constexpr long double PixelFrequency = 5'376'240.0 * TIME_SCALE; // NTSC
+	//static constexpr long double PixelFrequency = 5'376'240.0 * TIME_SCALE; // NTSC
 	//static constexpr double PixelFrequency = 5'352'300.0 * TIME_SCALE; // PAL
+	static constexpr long double PixelFrequency = BaseFrequency / 2.0;
 	static float RatioSize;
 
 	Graphics();

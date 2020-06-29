@@ -182,6 +182,10 @@ private:
 		setFlagBit(F_F3, value & 0x08);
 		setFlagBit(F_F5, value & 0x20);
 	}
+	void setFlagUndocMethod2(uint8_t value) {
+		setFlagBit(F_F3, value & 0x08);
+		setFlagBit(F_F5, value & 0x02);
+	}
 
 	void setCBRegisterWithCopy(uint8_t iRegister, uint8_t iValue) {
 		if (_useRegisterIX) {
