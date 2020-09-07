@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type")
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # Project variables
 set(project_name EmulIX-SMS)
@@ -53,11 +56,16 @@ set(header_files
 
 # include_directories(include)
 
-find_package(SFML 2.5 REQUIRED COMPONENTS system window graphics network audio main)
+find_package(SFML 2.5.1 REQUIRED COMPONENTS system window graphics network audio main)
 find_package(OpenGL COMPONENTS OpenGL)
 
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 add_executable(${project_name} ${source_files} ${header_files})
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR})
 
-target_link_libraries(${project_name} OpenGL::GL sfml-system sfml-window sfml-graphics sfml-network sfml-audio sfml-main)
+target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Widgets sfml-system sfml-window sfml-graphics sfml-network sfml-audio sfml-main)
+
+# Visual Studio purpose
+set_target_properties(${project_name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
