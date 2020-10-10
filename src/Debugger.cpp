@@ -1,5 +1,7 @@
 #include "Debugger.h"
 
+#include <QKeyEvent>
+
 #include "Breakpoint.h"
 #include "Log.h"
 #include "Memory.h"
@@ -73,20 +75,18 @@ Debugger::State Debugger::manage(uint_fast64_t iCurrentAddr)
 	return _actualState;
 }
 
-void Debugger::captureEvents(const sf::Event& event)
+void Debugger::captureEvents(const QKeyEvent& iKeyEvent)
 {
-	if (event.type == sf::Event::KeyReleased)
-	{
-		if (event.key.code == sf::Keyboard::F5) {
-			if (getState() == Debugger::State::kRunning) {
-				pause();
-			} else {
-				resume();
-			}
-		} else if (event.key.code == sf::Keyboard::F8) {
-			step();
-		}
-	}
+    int keyPressed = iKeyEvent.key();
+    if (keyPressed == Qt::Key_F5) {
+        if (getState() == Debugger::State::kRunning) {
+            pause();
+        } else {
+            resume();
+        }
+    } else if (keyPressed == Qt::Key_F8) {
+        step();
+    }
 
 }
 

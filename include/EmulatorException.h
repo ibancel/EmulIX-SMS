@@ -9,9 +9,9 @@ class EmulatorException : public std::runtime_error
 {
 public:
 	EmulatorException(const std::string& iMsg, const char* iFile, int iLine);
-	~EmulatorException() {}
+    virtual ~EmulatorException() noexcept {}
 
-	const char* what() const;
+    virtual const char* what() const noexcept;
 
 private:
 	std::string _message;

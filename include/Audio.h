@@ -34,9 +34,9 @@ private:
 	int _inputClock;
 
 	// SFML
-	sf::Clock _clockTime;
-	sf::SoundBuffer _buffer[4];
-	sf::Sound _sound[4];
+    sf::Clock _clockTime;
+    sf::SoundBuffer _buffer[4];
+    sf::Sound _sound[4];
 
 
 	/// functions:

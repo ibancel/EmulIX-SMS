@@ -1,11 +1,11 @@
 #pragma once
 
-#include <thread>
+#include <condition_variable>
 #include <mutex>
-
-#include <SFML/Graphics.hpp>
+#include <thread>
 
 #include "definitions.h"
+#include "ui/GameWindow.h"
 
 class GraphicsThread
 {
@@ -19,8 +19,8 @@ public:
 	GraphicsThread();
 	~GraphicsThread();
 
-	static sf::Color nibbleToSfmlColor(std::uint_fast8_t nibble);
-	static sf::Color byteToSfmlColor(uint_fast8_t iByte, bool useTransparency = false);
+    static PixelColor nibbleToPixelColor(std::uint_fast8_t nibble);
+    static PixelColor byteToPixelColor(uint_fast8_t iByte, bool useTransparency = false);
 	
 	// Thread control
 	void close(bool iWaitJoin);
@@ -40,8 +40,6 @@ public:
 	uint8_t getStatusRegister();
 	uint8_t getStatusRegisterBit(uint8_t position);
 	uint8_t getVram(uint16_t iAddress);
-	sf::RenderWindow* getWindowInfo() const { return _winInfo; }
-	sf::RenderWindow* getWindowGame() const { return _winGame; }
 
 	// Sets:
 	void setCram(uint16_t iAddress, uint8_t iNewValue);
@@ -50,8 +48,7 @@ public:
 	void setStatusRegister(uint8_t iNewValue);
 	void setStatusRegisterBit(uint8_t position, bool newBit);
 	void setVram(uint16_t iAddress, uint8_t iNewValue);
-	void setWindowInfo(sf::RenderWindow* win);
-	void setWindowGame(sf::RenderWindow* win);
+    void setGameWindow(GameWindow* iWindow);
 
 
 	bool isSynchronized() {
@@ -75,11 +72,7 @@ private:
 	std::thread _threadInfo;
 	bool _isRunning;
 
-	sf::RenderWindow* _winGame;
-	sf::RenderWindow* _winInfo;
-
-	bool _requestWinInfoActivation;
-	bool _requestWinGameActivation;
+    GameWindow* _gameWindow;
 
 	uint8_t _graphicMode;
 	uint8_t _register[GRAPHIC_REGISTER_SIZE];
@@ -87,6 +80,8 @@ private:
 	uint8_t _tempLineRegister;
 	uint8_t _vram[GRAPHIC_VRAM_SIZE];
 	uint8_t _cram[GRAPHIC_CRAM_SIZE];
+
+    Frame _frame;
 
 	long double _cpuStatesExecuted;
 
@@ -106,12 +101,6 @@ private:
 	int _frameCounter;
 	float _framePerSecond;
 
-	// SFML
-	sf::Font font;
-	sf::Clock _clockFPS;
-	sf::Image _drawImage;
-	sf::Texture _tex;
-
 	// To remove:
 	int _runningBarState;
 
@@ -119,6 +108,7 @@ private:
 	void drawLine(int line);
 	void drawPatterns();
 	void drawPalettes();
+    void getFrame() { /* TODO */ }
 	void runThreadGame();
 	void runThreadInfo();
 

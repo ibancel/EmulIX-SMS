@@ -6,7 +6,7 @@ EmulatorException::EmulatorException(const std::string& iMsg, const char* iFile,
 	_message = iMsg + " : " + std::string(iFile) + " # " + std::to_string(iLine);
 }
 
-const char* EmulatorException::what() const
+const char* EmulatorException::what() const noexcept
 {
 	return _message.c_str();
 }

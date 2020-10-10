@@ -15,7 +15,7 @@ Audio::Audio()
 		_registerTone[i] = 0;
 		_output[i] = 1;
 		_counter[i] = 0;
-		_sound[i].setLoop(true);
+        _sound[i].setLoop(true);
 	}
 
 	_registerLatch = 0;
@@ -59,13 +59,13 @@ uint8_t Audio::write(uint8_t port, uint8_t data)
 
 void Audio::run()
 {
-	sf::Time elapsedTime = _clockTime.restart();
+    sf::Time elapsedTime = _clockTime.restart();
 
 	for(int i = 0 ; i < 1 ; i++)
 	{
 		continue;
-		if(_counter[i] > 0)
-			_counter[i] -= elapsedTime.asSeconds() * _inputClock;
+        if(_counter[i] > 0)
+            _counter[i] -= elapsedTime.asSeconds() * _inputClock;
 
 		// no else for manage it directly at 0
 		if(_counter[i] <= 0)
@@ -123,11 +123,11 @@ void Audio::playSound(uint8_t indice)
 	}
 
 	//cout << hex << (uint16_t)indice << " - " << (uint16_t)_registerVol[indice] << " - " << (uint16_t)_registerTone[indice] << endl;
-	if (!_buffer[indice].loadFromSamples(raw, 44100, 1, 44100)) {
-		std::cerr << "Loading failed!" << std::endl;
-	}
+    if (!_buffer[indice].loadFromSamples(raw, 44100, 1, 44100)) {
+        std::cerr << "Loading failed!" << std::endl;
+    }
 
-	_sound[indice].stop();
-	_sound[indice].setBuffer(_buffer[indice]);
-	_sound[indice].play();
+    _sound[indice].stop();
+    _sound[indice].setBuffer(_buffer[indice]);
+    _sound[indice].play();
 }

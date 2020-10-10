@@ -1,7 +1,7 @@
 #ifndef _H_EMULATOR_DEFINITIONS
 #define _H_EMULATOR_DEFINITIONS
 
-#include <iostream>
+#include <string>
 
 #define DEBUG_MODE false || _DEBUG
 

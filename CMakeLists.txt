@@ -6,11 +6,13 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+#set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Project variables
 set(project_name EmulIX-SMS)
 set(EXECUTABLE_OUTPUT_PATH bin/)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_SUPPRESS_REGENERATION True)
 
@@ -25,6 +27,7 @@ set(source_files
 	src/Debugger.cpp
 	src/definitions.cpp
 	src/EmulatorException.cpp
+        src/Frame.cpp
 	src/Graphics.cpp
 	src/GraphicsThread.cpp
 	src/Inputs.cpp
@@ -33,6 +36,8 @@ set(source_files
 	src/Memory.cpp
 	src/MemoryBank.cpp
 	src/Stats.cpp
+        src/ui/GameWindow.cpp
+        src/ui/MainWindow.cpp
 	src/Watcher.cpp
 )
 set(header_files
@@ -43,6 +48,7 @@ set(header_files
 	include/Debugger.h
 	include/definitions.h
 	include/EmulatorException.h
+        include/Frame.h
 	include/Graphics.h
 	include/GraphicsThread.h
 	include/Inputs.h
@@ -51,21 +57,35 @@ set(header_files
 	include/MemoryBank.h
 	include/Singleton.h
 	include/Stats.h
+        include/ui/GameWindow.h
+        include/ui/MainWindow.h
 	include/Watcher.h
 )
 
-# include_directories(include)
+set(ui_files
+    src/ui/MainWindow.ui
+)
 
-find_package(SFML 2.5.1 REQUIRED COMPONENTS system window graphics network audio main)
+include_directories(include)
+
+find_package(SFML 2.5.1 REQUIRED COMPONENTS system audio)
 find_package(OpenGL COMPONENTS OpenGL)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
-add_executable(${project_name} ${source_files} ${header_files})
+set(qrc_files)
+qt5_add_resources(qrc_files
+    resources.qrc
+)
+
+#qt5_wrap_ui(ui_wrap ${ui_files})
+#qt5_wrap_cpp(moc_sources ${header_files})
+
+add_executable(${project_name} ${source_files} ${header_files} ${ui_files} ${qrc_files})
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR})
 
-target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Widgets sfml-system sfml-window sfml-graphics sfml-network sfml-audio sfml-main)
+target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Widgets pthread sfml-system sfml-audio)
 
 # Visual Studio purpose
 set_target_properties(${project_name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")

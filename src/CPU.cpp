@@ -32,7 +32,8 @@ CPU::CPU(Memory* m, Graphics* g, Cartridge* c) :
 	_graphics = g;
 	_cartridge = c;
 
-	_audio = new Audio(); // for the moment !
+    // TODO(ibancel): Audio
+    // _audio = new Audio(); // for the moment !
 	_inputs = Inputs::Instance();
 
 	_isInitialized = false;
@@ -170,7 +171,7 @@ int CPU::cycle()
 
 	addNbStates(nbStates);
 
-	//_audio->run(); // to put in main loop
+    //_audio->run(); // to put in main loop
 	return nbStates;
 }
 
@@ -374,7 +375,8 @@ uint8_t CPU::portCommunication(bool rw, uint8_t address, uint8_t data)
 	else if(address == 0x7E || address == 0x7F)
 	{
 		if (rw) {
-			_audio->write(address, data);
+            // TODO(ibancel): audio
+            //_audio->write(address, data);
 		} else {
 			return _graphics->read(address);
 		}

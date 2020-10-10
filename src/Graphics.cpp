@@ -10,25 +10,20 @@ using namespace std;
 float Graphics::RatioSize = 2.0f;
 
 
-Graphics::Graphics() : Graphics{Memory::Instance(), nullptr}
+Graphics::Graphics()
 {
+    _memory = Memory::Instance();
 
-}
+    _addressVRAM = 0;
+    _codeRegister = 0;
+    _actualMode = 0;
+    _controlByte = 0;
+    _controlCmd = 0;
+    _readAheadBuffer = 0;
 
-Graphics::Graphics(Memory* m, sf::RenderWindow* winInfo) : _graphicsThread{}
-{
-	_memory = Memory::Instance();
+    _debugDrawSprite = true;
 
-	_addressVRAM = 0;
-	_codeRegister = 0;
-	_actualMode = 0;
-	_controlByte = 0;
-	_controlCmd = 0;
-	_readAheadBuffer = 0;
-
-	_debugDrawSprite = true;
-
-	reset();
+    reset();
 }
 
 void Graphics::reset()
@@ -173,14 +168,19 @@ uint8_t Graphics::controlAction()
 	return 0; // TODO
 }
 
-void Graphics::setWindowInfo(sf::RenderWindow *win)
-{
-	_graphicsThread.setWindowInfo(win);
-}
+//void Graphics::setWindowInfo(sf::RenderWindow *win)
+//{
+//	_graphicsThread.setWindowInfo(win);
+//}
 
-void Graphics::setWindowGame(sf::RenderWindow *win)
+//void Graphics::setWindowGame(sf::RenderWindow *win)
+//{
+//	_graphicsThread.setWindowGame(win);
+//}
+
+void Graphics::setGameWindow(GameWindow *iWindow)
 {
-	_graphicsThread.setWindowGame(win);
+    _graphicsThread.setGameWindow(iWindow);
 }
 
 void Graphics::dumpVram()

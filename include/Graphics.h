@@ -3,9 +3,6 @@
 
 #include <chrono>
 
-#include <SFML/Graphics.hpp>
-#include <SFML/OpenGL.hpp>
-
 #include "GraphicsThread.h"
 #include "Memory.h"
 #include "Log.h"
@@ -23,7 +20,6 @@ public:
 	static float RatioSize;
 
 	Graphics();
-	Graphics(Memory *m, sf::RenderWindow *winInfo);
 
 	void reset();
 
@@ -36,14 +32,11 @@ public:
 
 	uint8_t controlAction();
 
-	void setWindowInfo(sf::RenderWindow *win);
-	void setWindowGame(sf::RenderWindow *win);
+    void setGameWindow(GameWindow* iWindow);
 
 	void dumpVram();
 
 	uint8_t getGraphicMode();
-	sf::RenderWindow* getWindowInfo() { return _graphicsThread.getWindowInfo(); }
-	sf::RenderWindow* getWindowGame() { return _graphicsThread.getWindowGame(); }
 
 	bool getIE() {
 		return _graphicsThread.getIE();

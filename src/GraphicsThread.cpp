@@ -1,33 +1,33 @@
 #include "GraphicsThread.h"
 
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 
 #include <SFML/Graphics.hpp>
 
 #include "definitions.h"
+#include "Frame.h"
 #include "Graphics.h"
 
 
 using namespace std::literals;
 
 GraphicsThread::GraphicsThread() : 
-	_winInfo{ nullptr },
-	_winGame{ nullptr },
+    _gameWindow{ nullptr },
 	_vram{ 0 },
 	_cram{ 0 },
 	_register{ 0 },
+    _frame{ImageWidth, ImageHeight, PixelColor{0,255,0,255}},
 	_graphicMode{ 0 },
-	_requestWinInfoActivation{ false },
-	_requestWinGameActivation{ false },
 	_isSynchronized{ true },
 	_frameCounter{ 0 },
 	_framePerSecond{ 0 }
 {
-	if (!font.loadFromFile("data/LiberationSans-Regular.ttf"))
-	{
-		std::cerr << "Cannot open the font !" << std::endl;
-	}
+//	if (!font.loadFromFile("data/LiberationSans-Regular.ttf"))
+//	{
+//		std::cerr << "Cannot open the font !" << std::endl;
+//	}
 
 	_cpuStatesExecuted = 0;
 	_statusRegister = 0;
@@ -41,36 +41,41 @@ GraphicsThread::~GraphicsThread()
 
 }
 
-sf::Color GraphicsThread::nibbleToSfmlColor(std::uint_fast8_t nibble)
+PixelColor GraphicsThread::nibbleToPixelColor(std::uint_fast8_t nibble)
 {
-	constexpr uint32_t colorArray[]{
-		0x00000000,
-		0x000000FF,
-		0x21C842FF,
-		0x5EDC78FF,
-		0x5455EDFF,
-		0x7D76FCFF,
-		0xD4524DFF,
-		0x42EBF5FF,
-		0xFC5554FF,
-		0xFF7978FF,
-		0xD4C154FF,
-		0xE6CE80FF,
-		0x21B03BFF,
-		0xC95BBAFF,
-		0xCCCCCCFF,
-		0xFFFFFFFF
-	};
+    constexpr uint32_t colorArray[]{
+        0x00000000,
+        0x000000FF,
+        0x21C842FF,
+        0x5EDC78FF,
+        0x5455EDFF,
+        0x7D76FCFF,
+        0xD4524DFF,
+        0x42EBF5FF,
+        0xFC5554FF,
+        0xFF7978FF,
+        0xD4C154FF,
+        0xE6CE80FF,
+        0x21B03BFF,
+        0xC95BBAFF,
+        0xCCCCCCFF,
+        0xFFFFFFFF
+    };
 
-	return sf::Color(colorArray[static_cast<size_t>(nibble & 0xF)]);
+    return PixelColor(colorArray[static_cast<size_t>(nibble & 0xF)]);
 }
 
-sf::Color GraphicsThread::byteToSfmlColor(std::uint_fast8_t iByte, bool useTransparency)
+PixelColor GraphicsThread::byteToPixelColor(std::uint_fast8_t iByte, bool useTransparency)
 {
-	if (useTransparency && ((iByte & 0b111111) == 0)) {
-		return sf::Color(0, 0, 0, 0);
-	}
-	return sf::Color((iByte & 0b11) * 85, ((iByte >> 2) & 0b11) * 85, ((iByte >> 4) & 0b11) * 85);
+    if (useTransparency && ((iByte & 0b111111) == 0)) {
+        return PixelColor{0, 0, 0, 0};
+    }
+    return PixelColor{
+        static_cast<uint8_t>((iByte & 0b11) * 85),
+        static_cast<uint8_t>(((iByte >> 2) & 0b11) * 85),
+        static_cast<uint8_t>(((iByte >> 4) & 0b11) * 85),
+        255
+    };
 }
 
 void GraphicsThread::close(bool iWaitJoin)
@@ -115,9 +120,7 @@ void GraphicsThread::reset()
 
 	setIsSynchronized(true);
 
-	_drawImage.create(ImageWidth, ImageHeight, sf::Color(0, 0, 0));
-	_tex.create(ImageWidth, ImageHeight);
-	_tex.loadFromImage(_drawImage);
+    _frame = Frame(ImageWidth, ImageHeight, PixelColor{255,0,0,255});
 }
 
 void GraphicsThread::start()
@@ -125,7 +128,6 @@ void GraphicsThread::start()
 	#if GRAPHIC_THREADING
 	if (!_isRunning) {
 		_isRunning = true;
-		_threadInfo = std::thread(&GraphicsThread::runThreadInfo, this);
 		_threadGame = std::thread(&GraphicsThread::runThreadGame, this);
 	}
 	#endif
@@ -133,112 +135,112 @@ void GraphicsThread::start()
 
 void GraphicsThread::drawInfo()
 {
-	if (!_winInfo) {
-		throw "No window found for drawing";
-	}
+//	if (!_winInfo) {
+//		throw "No window found for drawing";
+//	}
 
-	if (_clockFPS.getElapsedTime().asSeconds() >= 1.0f) {
-		_clockFPS.restart();
-		_framePerSecond = _frameCounter;
-		_frameCounter = 0;
-	}
+//	if (_clockFPS.getElapsedTime().asSeconds() >= 1.0f) {
+//		_clockFPS.restart();
+//		_framePerSecond = _frameCounter;
+//		_frameCounter = 0;
+//	}
 
-	std::chrono::duration<double, std::milli> intervalDisplay = std::chrono::steady_clock::now() - _chronoDispInfo;
-	if (intervalDisplay.count() < 16) {
-		return;
-	}
-	_chronoDispInfo = std::chrono::steady_clock::now();
+//	std::chrono::duration<double, std::milli> intervalDisplay = std::chrono::steady_clock::now() - _chronoDispInfo;
+//	if (intervalDisplay.count() < 16) {
+//		return;
+//	}
+//	_chronoDispInfo = std::chrono::steady_clock::now();
 
-	float time = _clockFPS.getElapsedTime().asSeconds();
-	int actualFPS = round(_frameCounter + ((1.0f - time) * _framePerSecond));
+//	float time = _clockFPS.getElapsedTime().asSeconds();
+//	int actualFPS = round(_frameCounter + ((1.0f - time) * _framePerSecond));
 
-	sf::Text text;
-	text.setFont(font);
+//	sf::Text text;
+//	text.setFont(font);
 
-	text.setCharacterSize(22);
-	text.setFillColor(sf::Color::Blue);
+//	text.setCharacterSize(22);
+//	text.setFillColor(sf::Color::Blue);
 
-	std::ostringstream ss;
+//	std::ostringstream ss;
 
-	int infoDispMode = Inputs::Instance()->getInfoDisplayMode();
-	if (infoDispMode == 0) {
-		int* most = Stats::getMost();
-		ss << actualFPS << " (" << (int)(Stats::getCpuExecSpeed()*100.0) << "%)" << std::endl
-			<< "mode: " << static_cast<int>(_graphicMode) << std::endl
-			<< "most used : " << std::endl 
-			<< "\t" << getOpcodeName(0, most[0]) << " - " << Stats::opcodeOccur[most[0]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[1]) << " - " << Stats::opcodeOccur[most[1]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[2]) << " - " << Stats::opcodeOccur[most[2]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[3]) << " - " << Stats::opcodeOccur[most[3]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[4]) << " - " << Stats::opcodeOccur[most[4]] << std::endl
-			<< "\t" << getOpcodeName(0, most[5]) << " - " << Stats::opcodeOccur[most[5]] << std::endl
-			<< "\t" << getOpcodeName(0, most[6]) << " - " << Stats::opcodeOccur[most[6]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[7]) << " - " << Stats::opcodeOccur[most[7]] << std::endl 
-			<< "\t" << getOpcodeName(0, most[8]) << " - " << Stats::opcodeOccur[most[8]];
-		text.setString(ss.str());
-	} else if (infoDispMode == 1) {
-		ss << actualFPS << std::endl << "mode: " << static_cast<int>(_graphicMode) << std::endl << "CRAM at "
-			<< std::hex << std::setfill('0')
-			<< std::setw(4) << getColorTableAddress() << ": " << std::endl
-			<< std::endl;
-		//<< "VRAM pointer: " << std::setw(4) << _addressVRAM;
-		text.setString(ss.str());
-	}
+//	int infoDispMode = Inputs::Instance()->getInfoDisplayMode();
+//	if (infoDispMode == 0) {
+//		int* most = Stats::getMost();
+//		ss << actualFPS << " (" << (int)(Stats::getCpuExecSpeed()*100.0) << "%)" << std::endl
+//			<< "mode: " << static_cast<int>(_graphicMode) << std::endl
+//			<< "most used : " << std::endl
+//			<< "\t" << getOpcodeName(0, most[0]) << " - " << Stats::opcodeOccur[most[0]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[1]) << " - " << Stats::opcodeOccur[most[1]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[2]) << " - " << Stats::opcodeOccur[most[2]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[3]) << " - " << Stats::opcodeOccur[most[3]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[4]) << " - " << Stats::opcodeOccur[most[4]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[5]) << " - " << Stats::opcodeOccur[most[5]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[6]) << " - " << Stats::opcodeOccur[most[6]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[7]) << " - " << Stats::opcodeOccur[most[7]] << std::endl
+//			<< "\t" << getOpcodeName(0, most[8]) << " - " << Stats::opcodeOccur[most[8]];
+//		text.setString(ss.str());
+//	} else if (infoDispMode == 1) {
+//		ss << actualFPS << std::endl << "mode: " << static_cast<int>(_graphicMode) << std::endl << "CRAM at "
+//			<< std::hex << std::setfill('0')
+//			<< std::setw(4) << getColorTableAddress() << ": " << std::endl
+//			<< std::endl;
+//		//<< "VRAM pointer: " << std::setw(4) << _addressVRAM;
+//		text.setString(ss.str());
+//	}
 
-	sf::Text textReg;
-	textReg.setFont(font);
-	textReg.setCharacterSize(22);
-	textReg.setFillColor(sf::Color::Blue);
-	textReg.setPosition(_winInfo->getSize().x - 150, 0);
-	std::ostringstream ssReg;
-	ssReg << "Status: " << std::hex << uint16_t(_statusRegister) << std::endl << std::endl;
-	for (int i = 0; i < GRAPHIC_REGISTER_SIZE; i++)
-		ssReg << "#" << i << ": " << std::hex << uint16_t(getRegister(i)) << std::endl;
-	textReg.setString(ssReg.str());
+//	sf::Text textReg;
+//	textReg.setFont(font);
+//	textReg.setCharacterSize(22);
+//	textReg.setFillColor(sf::Color::Blue);
+//	textReg.setPosition(_winInfo->getSize().x - 150, 0);
+//	std::ostringstream ssReg;
+//	ssReg << "Status: " << std::hex << uint16_t(_statusRegister) << std::endl << std::endl;
+//	for (int i = 0; i < GRAPHIC_REGISTER_SIZE; i++)
+//		ssReg << "#" << i << ": " << std::hex << uint16_t(getRegister(i)) << std::endl;
+//	textReg.setString(ssReg.str());
 
-	sf::Text textFlag;
-	textFlag.setFont(font);
-	textFlag.setCharacterSize(22);
-	textFlag.setFillColor(sf::Color::Blue);
-	textFlag.setPosition(10, _winInfo->getSize().y - 30);
-	std::ostringstream ssFlag;
-	uint8_t r = CPU::Instance()->getRegisterFlag();
-	ssFlag << std::hex << "Flag: S=" << ((r >> 7) & 1) << " Z=" << ((r >> 6) & 1);
-	ssFlag << std::hex << " N=" << ((r >> 4) & 1) << " P/V=" << ((r >> 2) & 1);
-	ssFlag << std::hex << " N=" << ((r >> 1) & 1) << " C=" << ((r >> 0) & 1);
-	textFlag.setString(ssFlag.str());
+//	sf::Text textFlag;
+//	textFlag.setFont(font);
+//	textFlag.setCharacterSize(22);
+//	textFlag.setFillColor(sf::Color::Blue);
+//	textFlag.setPosition(10, _winInfo->getSize().y - 30);
+//	std::ostringstream ssFlag;
+//	uint8_t r = CPU::Instance()->getRegisterFlag();
+//	ssFlag << std::hex << "Flag: S=" << ((r >> 7) & 1) << " Z=" << ((r >> 6) & 1);
+//	ssFlag << std::hex << " N=" << ((r >> 4) & 1) << " P/V=" << ((r >> 2) & 1);
+//	ssFlag << std::hex << " N=" << ((r >> 1) & 1) << " C=" << ((r >> 0) & 1);
+//	textFlag.setString(ssFlag.str());
 
 
-	sf::Text textDebugger;
-	textDebugger.setFont(font);
-	textDebugger.setCharacterSize(22);
-	textDebugger.setFillColor(sf::Color::Blue);
-	textDebugger.setPosition(10, _winInfo->getSize().y - 60);
-	if (Debugger::Instance()->getState() == Debugger::State::kRunning) {
-		if (_runningBarState == 0) {
-			textDebugger.setString(" |");
-			_runningBarState++;
-		} else if (_runningBarState == 1) {
-			textDebugger.setString(" /");
-			_runningBarState++;
-		} else if (_runningBarState == 2) {
-			textDebugger.setString("---");
-			_runningBarState++;
-		} else {
-			textDebugger.setString(" \\");
-			_runningBarState = 0;
-		}
-	} else {
-		textDebugger.setFillColor(sf::Color::Red);
-		textDebugger.setString("||");
-	}
+//	sf::Text textDebugger;
+//	textDebugger.setFont(font);
+//	textDebugger.setCharacterSize(22);
+//	textDebugger.setFillColor(sf::Color::Blue);
+//	textDebugger.setPosition(10, _winInfo->getSize().y - 60);
+//	if (Debugger::Instance()->getState() == Debugger::State::kRunning) {
+//		if (_runningBarState == 0) {
+//			textDebugger.setString(" |");
+//			_runningBarState++;
+//		} else if (_runningBarState == 1) {
+//			textDebugger.setString(" /");
+//			_runningBarState++;
+//		} else if (_runningBarState == 2) {
+//			textDebugger.setString("---");
+//			_runningBarState++;
+//		} else {
+//			textDebugger.setString(" \\");
+//			_runningBarState = 0;
+//		}
+//	} else {
+//		textDebugger.setFillColor(sf::Color::Red);
+//		textDebugger.setString("||");
+//	}
 
-	_winInfo->clear(sf::Color::Black);
-	_winInfo->draw(text);
-	_winInfo->draw(textReg);
-	_winInfo->draw(textFlag);
-	_winInfo->draw(textDebugger);
-	_winInfo->display();
+//	_winInfo->clear(sf::Color::Black);
+//	_winInfo->draw(text);
+//	_winInfo->draw(textReg);
+//	_winInfo->draw(textFlag);
+//	_winInfo->draw(textDebugger);
+//	_winInfo->display();
 }
 
 void GraphicsThread::drawGame()
@@ -358,26 +360,9 @@ void GraphicsThread::setVram(uint16_t iAddress, uint8_t iNewValue)
 	_vram[iAddress] = iNewValue;
 }
 
-void GraphicsThread::setWindowInfo(sf::RenderWindow* win)
+void GraphicsThread::setGameWindow(GameWindow *iWindow)
 {
-	_winInfo = win;
-#if GRAPHIC_THREADING
-	if (_winInfo) {
-		_winInfo->setActive(false);
-		_requestWinInfoActivation = true;
-	}
-#endif
-}
-
-void GraphicsThread::setWindowGame(sf::RenderWindow* win)
-{
-	_winGame = win;
-#if GRAPHIC_THREADING
-	if (_winGame) {
-		_winGame->setActive(false);
-		_requestWinGameActivation = true;
-	}
-#endif
+    _gameWindow = iWindow;
 }
 
 // ** PRIVATE **
@@ -427,23 +412,15 @@ uint8_t* const GraphicsThread::getSpritePatternTable(uint16_t memoryOffset)
 
 void GraphicsThread::drawFrame()
 {
-	uint8_t backdropColor = getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()];
-	_winGame->clear(byteToSfmlColor(backdropColor));
+    uint8_t backdropColor = getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()];
 
-	int infoDispMode = Inputs::Instance()->getInfoDisplayMode();
-	if (infoDispMode == 0) {
-		if (isActiveDisplay())
-		{
-			_tex.loadFromImage(_drawImage);
-			_winGame->draw(sf::Sprite(_tex));
-		}
-	} else if (infoDispMode == 1) {
-		drawPatterns();
-	}
-
-	drawPalettes();
-
-	_winGame->display();
+    if(isActiveDisplay()) {
+        // TODO: draw palettes and patterns (if Inputs::getInfoDisplayMode())
+        _frame.setBackdropColor(byteToPixelColor(backdropColor));
+        _gameWindow->drawFrame(_frame);
+    } else {
+        _gameWindow->drawFrame(Frame{_frame.width(), _frame.height(), byteToPixelColor(backdropColor)});
+    }
 }
 
 void GraphicsThread::drawLine(int line)
@@ -468,7 +445,8 @@ void GraphicsThread::drawLine(int line)
 
 				uint8_t bitPixel = getBit8(getPatternGenerator(8 * patternBaseAddress)[y - characterY], 7 - (x - characterX));
 				uint_fast8_t colorByte = (getColorTable())[patternBaseAddress / 8];
-				_drawImage.setPixel(x, y, nibbleToSfmlColor((bitPixel ? colorByte >> 4 : colorByte & 0xF)));
+//				_drawImage.setPixel(x, y, nibbleToSfmlColor((bitPixel ? colorByte >> 4 : colorByte & 0xF)));
+                _frame.setPixel(x, y, nibbleToPixelColor(bitPixel ? colorByte >> 4 : colorByte & 0xF));
 			} 
 			else if (graphicMode == 2)
 			{
@@ -486,7 +464,8 @@ void GraphicsThread::drawLine(int line)
 
 				uint8_t bitPixel = getBit8(getPatternGeneratorMode2(patternBaseAddress)[y - characterY], 7 - (x - characterX));
 				uint_fast8_t colorByte = (getColorTableMode2(patternBaseAddress))[y - characterY];
-				_drawImage.setPixel(x, y, nibbleToSfmlColor((bitPixel ? colorByte >> 4 : colorByte & 0xF)));
+//				_drawImage.setPixel(x, y, nibbleToSfmlColor((bitPixel ? colorByte >> 4 : colorByte & 0xF)));
+                _frame.setPixel(x, y, nibbleToPixelColor((bitPixel ? colorByte >> 4 : colorByte & 0xF)));
 			} 
 			else if (graphicMode == 4)
 			{
@@ -496,7 +475,8 @@ void GraphicsThread::drawLine(int line)
 				const uint8_t hFineScroll = allowHScroll ? (horizontalScroll & 0b0000'0111) : 0;
 
 				if (allowHScroll && getBit8(getRegister(0), 5) && x < 8) {
-					_drawImage.setPixel(x, y, byteToSfmlColor(getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()], true));
+//					_drawImage.setPixel(x, y, byteToSfmlColor(getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()], true));
+                    _frame.setPixel(x, y, byteToPixelColor(getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()], true));
 				} else {
 					const uint_fast8_t characterX = ((32 - hTileScroll) + ((x - hFineScroll) / 8)) % 32;
 					const uint_fast16_t characterPosition = characterX + characterY * 32;
@@ -529,7 +509,8 @@ void GraphicsThread::drawLine(int line)
 					selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 3], columnPatternIndexFlipped) << 3;
 
 					uint_fast8_t colorByte = getColorTable(paletteSelect << 4)[selectedColor];
-					_drawImage.setPixel(x, y, byteToSfmlColor(colorByte, true));
+//					_drawImage.setPixel(x, y, byteToSfmlColor(colorByte, true));
+                    _frame.setPixel(x, y, byteToPixelColor(colorByte, true));
 				}
 			} 
 			else
@@ -612,8 +593,9 @@ void GraphicsThread::drawLine(int line)
 						
 						if (selectedColor != 0) {
 							uint_fast8_t colorByte = getColorTable(VDP::ColorBank::kSecond)[selectedColor];
-							sf::Color pixelColor = byteToSfmlColor(colorByte, false);
-							_drawImage.setPixel(xReal, yReal, pixelColor);
+//							sf::Color pixelColor = byteToSfmlColor(colorByte, false);
+//							_drawImage.setPixel(xReal, yReal, pixelColor);
+                            _frame.setPixel(xReal, yReal, byteToPixelColor(colorByte, false));
 							if (!collision) {
 								if (collisionMap[xReal][yReal]) {
 									collision = true;
@@ -640,126 +622,140 @@ void GraphicsThread::drawLine(int line)
 
 void GraphicsThread::drawPatterns()
 {
-	int width = 256;
-	int height = 128;
+//	int width = 256;
+//	int height = 128;
 
-	sf::Image aImg;
-	aImg.create(width, height, sf::Color(0, 0, 0));
-	sf::Texture aTex;
-	aTex.create(width, height);
+//	sf::Image aImg;
+//	aImg.create(width, height, sf::Color(0, 0, 0));
+//	sf::Texture aTex;
+//	aTex.create(width, height);
 
-	for (int y = 0; y < height; y++)
-	{
-		const uint8_t characterY = y / 8;
-		const uint8_t rowPatternIndex = (y - (static_cast<uint16_t>(characterY) * 8)) << 2; // "<<" for faster "*"
-		for (int x = 0; x < width; x++)
-		{
-			const uint8_t characterX = x / 8;
-			uint16_t patternIndex = characterX + characterY * 32;
+//	for (int y = 0; y < height; y++)
+//	{
+//		const uint8_t characterY = y / 8;
+//		const uint8_t rowPatternIndex = (y - (static_cast<uint16_t>(characterY) * 8)) << 2; // "<<" for faster "*"
+//		for (int x = 0; x < width; x++)
+//		{
+//			const uint8_t characterX = x / 8;
+//			uint16_t patternIndex = characterX + characterY * 32;
 
-			patternIndex <<= 5; // = patternIndex * 32
+//			patternIndex <<= 5; // = patternIndex * 32
 
-			uint8_t const* const pattern = &_vram[patternIndex];
+//			uint8_t const* const pattern = &_vram[patternIndex];
 
-			const uint8_t columnPatternIndex = 7 - (x - (static_cast<uint16_t>(characterX) * 8));
-			uint8_t selectedColor = getBit8(pattern[rowPatternIndex], columnPatternIndex);
-			selectedColor |= getBit8(pattern[rowPatternIndex + 1], columnPatternIndex) << 1;
-			selectedColor |= getBit8(pattern[rowPatternIndex + 2], columnPatternIndex) << 2;
-			selectedColor |= getBit8(pattern[rowPatternIndex + 3], columnPatternIndex) << 3;
+//			const uint8_t columnPatternIndex = 7 - (x - (static_cast<uint16_t>(characterX) * 8));
+//			uint8_t selectedColor = getBit8(pattern[rowPatternIndex], columnPatternIndex);
+//			selectedColor |= getBit8(pattern[rowPatternIndex + 1], columnPatternIndex) << 1;
+//			selectedColor |= getBit8(pattern[rowPatternIndex + 2], columnPatternIndex) << 2;
+//			selectedColor |= getBit8(pattern[rowPatternIndex + 3], columnPatternIndex) << 3;
 
-			uint8_t colorByte = getColorTable(VDP::ColorBank::kFirst)[selectedColor];
-			aImg.setPixel(x, y, byteToSfmlColor(colorByte, true));
-		}
-	}
-	aTex.loadFromImage(aImg);
-	sf::Sprite aSprite(aTex);
-	aSprite.setPosition(0, 0);
-	_winGame->draw(aSprite);
+//			uint8_t colorByte = getColorTable(VDP::ColorBank::kFirst)[selectedColor];
+//			aImg.setPixel(x, y, byteToSfmlColor(colorByte, true));
+//		}
+//	}
+//	aTex.loadFromImage(aImg);
+//	sf::Sprite aSprite(aTex);
+//	aSprite.setPosition(0, 0);
+
+//	_winGame->draw(aSprite);
 }
 
 void GraphicsThread::drawPalettes()
 {
-	int width = 256;
-	int height = 192;
+//	int width = 256;
+//	int height = 192;
 
-	sf::Image aImg;
-	aImg.create(256, 32, sf::Color(255, 0, 0));
-	sf::Texture aTex;
-	aTex.create(256, 32);
+//	sf::Image aImg;
+//	aImg.create(256, 32, sf::Color(255, 0, 0));
+//	sf::Texture aTex;
+//	aTex.create(256, 32);
 
-	for (uint_fast16_t y = 0; y < 32; y++)
-	{
-		for (uint_fast16_t x = 0; x < 256; x++)
-		{
-			uint_fast8_t patternPosX = x / 16;
-			uint_fast8_t patternPosY = y / 16;
-			uint_fast8_t colorByte = getColorTable(patternPosY * 16)[patternPosX];
+//	for (uint_fast16_t y = 0; y < 32; y++)
+//	{
+//		for (uint_fast16_t x = 0; x < 256; x++)
+//		{
+//			uint_fast8_t patternPosX = x / 16;
+//			uint_fast8_t patternPosY = y / 16;
+//			uint_fast8_t colorByte = getColorTable(patternPosY * 16)[patternPosX];
 
-			if (x % 16 == 0 /*|| (x + 1) % 16 == 0*/ || x == 255 || y % 16 == 0 || y == 31/*|| (y + 1) % 16 == 0*/) {
-				aImg.setPixel(x, y, sf::Color::White);
-			} else {
-				aImg.setPixel(x, y, byteToSfmlColor(colorByte));
-			}
-		}
-	}
-	aTex.loadFromImage(aImg);
-	sf::Sprite aSprite(aTex);
-	aSprite.setPosition(0, 200);
-	_winGame->draw(aSprite);
+//			if (x % 16 == 0 /*|| (x + 1) % 16 == 0*/ || x == 255 || y % 16 == 0 || y == 31/*|| (y + 1) % 16 == 0*/) {
+//				aImg.setPixel(x, y, sf::Color::White);
+//			} else {
+//				aImg.setPixel(x, y, byteToSfmlColor(colorByte));
+//			}
+//		}
+//	}
+//	aTex.loadFromImage(aImg);
+//	sf::Sprite aSprite(aTex);
+//	aSprite.setPosition(0, 200);
+
+//	_winGame->draw(aSprite);
 }
 
 void GraphicsThread::runThreadGame()
 {
-	sf::RenderWindow windowGame(sf::VideoMode(GRAPHIC_WIDTH * Graphics::RatioSize * 2.0, GRAPHIC_HEIGHT * Graphics::RatioSize * 2.0), "Game - EmulIX MasterSystem");
-	windowGame.setPosition(sf::Vector2i(windowGame.getPosition().x + GRAPHIC_WIDTH * Graphics::RatioSize * 2.0 / 2, windowGame.getPosition().y));
-	_winGame = &windowGame;
+//    sf::RenderWindow windowGame(sf::VideoMode(GRAPHIC_WIDTH * Graphics::RatioSize * 2.0, GRAPHIC_HEIGHT * Graphics::RatioSize * 2.0), "Game - EmulIX MasterSystem");
+//    windowGame.setPosition(sf::Vector2i(windowGame.getPosition().x + GRAPHIC_WIDTH * Graphics::RatioSize * 2.0 / 2, windowGame.getPosition().y));
+//    _winGame = &windowGame;
 
-	if (_winGame) {
-		_winGame->clear(sf::Color::Black);
-		_winGame->display();
-		_winGame->requestFocus();
-	}
+//	if (_winGame) {
+//		_winGame->clear(sf::Color::Black);
+//		_winGame->display();
+//		_winGame->requestFocus();
+//	}
 
-	while (_isRunning) {
-		if (_requestWinGameActivation && _winGame && _winGame->isOpen()) {
-			_winGame->setActive(true);
-			_requestWinGameActivation = false;
-		}
+//	while (_isRunning) {
+//		if (_requestWinGameActivation && _winGame && _winGame->isOpen()) {
+//			_winGame->setActive(true);
+//			_requestWinGameActivation = false;
+//		}
 
-		if (_winGame && _winGame->isOpen()) {
-			Inputs::Instance()->captureEventsGame(_winGame);
-			if (_winGame->isOpen()) {
-				drawGame();
-			}
-		}
+//		if (_winGame && _winGame->isOpen()) {
+//			Inputs::Instance()->captureEventsGame(_winGame);
+//			if (_winGame->isOpen()) {
+//				drawGame();
+//			}
+//		}
 
-		// Wait 1ms or new states
-		{
-			std::unique_lock<std::mutex> aLock{ this->mutexSync };
-			this->conditionSync.wait_for(aLock, 1ms, [this] { return !this->isSynchronized(); });
-		}
-	}
+//		// Wait 1ms or new states
+//		{
+//			std::unique_lock<std::mutex> aLock{ this->mutexSync };
+//			this->conditionSync.wait_for(aLock, 1ms, [this] { return !this->isSynchronized(); });
+//		}
+//	}
+
+    while(_isRunning) {
+
+        if(_gameWindow) {
+            drawGame();
+        }
+
+        {
+            std::unique_lock<std::mutex> aLock{ this->mutexSync };
+            this->conditionSync.wait_for(aLock, 1ms, [this] { return !this->isSynchronized(); });
+        }
+    }
 }
 
 void GraphicsThread::runThreadInfo()
 {
-	sf::RenderWindow windowInfo(sf::VideoMode(static_cast<int>(GRAPHIC_WIDTH * 2), static_cast<int>(GRAPHIC_HEIGHT * 2)), "Info - EmulIX MasterSystem");
-	windowInfo.setPosition(sf::Vector2i(windowInfo.getPosition().x - GRAPHIC_WIDTH * 2 / 2, windowInfo.getPosition().y));
-	_winInfo = &windowInfo;
+//	sf::RenderWindow windowInfo(sf::VideoMode(static_cast<int>(GRAPHIC_WIDTH * 2), static_cast<int>(GRAPHIC_HEIGHT * 2)), "Info - EmulIX MasterSystem");
+//	windowInfo.setPosition(sf::Vector2i(windowInfo.getPosition().x - GRAPHIC_WIDTH * 2 / 2, windowInfo.getPosition().y));
+//	_winInfo = &windowInfo;
 
-	while (_isRunning) {
-		if (_requestWinInfoActivation && _winInfo && _winInfo->isOpen()) {
-			_winInfo->setActive(true);
-			_requestWinInfoActivation = false;
-		}
+//	while (_isRunning) {
+//		if (_requestWinInfoActivation && _winInfo && _winInfo->isOpen()) {
+//			_winInfo->setActive(true);
+//			_requestWinInfoActivation = false;
+//		}
 
-		if (_winInfo && _winInfo->isOpen()) {
-			Inputs::Instance()->captureEventsInfo(_winInfo);
-			if (_winInfo->isOpen()) {
-				drawInfo();
-			}
-		}
+//		if (_winInfo && _winInfo->isOpen()) {
+//			Inputs::Instance()->captureEventsInfo(_winInfo);
+//			if (_winInfo->isOpen()) {
+//				drawInfo();
+//			}
+//		}
 
-		std::this_thread::sleep_for(4ms);
-	}
+//		std::this_thread::sleep_for(4ms);
+//	}
 }

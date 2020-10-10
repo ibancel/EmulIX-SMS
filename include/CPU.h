@@ -66,7 +66,7 @@ private:
 	Memory *_memory;
 	Graphics *_graphics;
 	Cartridge *_cartridge;
-	Audio *_audio;
+    //Audio *_audio;
 	Inputs *_inputs;
 
 	bool _isInitialized;

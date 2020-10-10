@@ -1,7 +1,5 @@
 #include "MemoryBank.h"
 
-#include <iostream>
-
 
 uint8_t& MemoryBank::at(const size_t index)
 {

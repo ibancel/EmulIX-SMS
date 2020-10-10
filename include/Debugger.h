@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include <SFML/Window.hpp>
+#include <QKeyEvent>
 
 #include "Breakpoint.h"
 #include "Watcher.h"
@@ -29,7 +29,7 @@ public:
 	void reset();
 
 	Debugger::State manage(uint_fast64_t iCurrentAddr);
-	void captureEvents(const sf::Event& event);
+    void captureEvents(const QKeyEvent& iKeyEvent);
 
 	void pause();
 	void resume();

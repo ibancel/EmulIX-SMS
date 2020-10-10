@@ -1,9 +1,11 @@
 #include "Cartridge.h"
 
-#include <iostream>
-#include <fstream>
-#include <string>
 #include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <string>
 
 #include "Log.h"
 #include "Memory.h"
@@ -18,14 +20,19 @@ Cartridge::Cartridge() : _embeddedRam{0}, _header{}
 void Cartridge::insert(const std::string& filename)
 {
 	memset(_embeddedRam, 0, Cartridge::RamSize);
-	readFromFile(filename);
+    readFromFile(filename);
+}
+
+bool Cartridge::isLoaded() const
+{
+    return _isLoaded;
 }
 
 void Cartridge::readFromFile(const std::string& filename)
 {
 	if (_isLoaded)
 	{
-		SLOG_THROW(lerror << "A cartridge is already IN!");
+        SLOG_THROW(lerror << "A cartridge is already IN!");
 	}
 	_data.clear();
 	
@@ -37,11 +44,11 @@ void Cartridge::readFromFile(const std::string& filename)
 
 #if !DEBUG_MODE
 	std::cout << "Open cartridge \"" << filename << "\"" << std::endl;
-#endif
+#else
 	SLOG(lnotif << "Open cartridge \"" << filename << "\"");
+#endif
 	if(!file) {
-		slog << lerror << "Cartridge loading failed." << std::endl;
-		exit(EXIT_FAILURE);
+        throw EMULATOR_EXCEPTION("Cartridge loading failed.");
 	}
 
 	char h;
@@ -81,6 +88,14 @@ void Cartridge::readFromFile(const std::string& filename)
 
 	_isLoaded = true;
 	readHeader();
+}
+
+void Cartridge::remove()
+{
+    memset(_embeddedRam, 0, Cartridge::RamSize);
+    _data.clear();
+    _header = {};
+    _isLoaded = false;
 }
 
 uint8_t Cartridge::getBlock(int address)

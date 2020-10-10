@@ -1,8 +1,6 @@
-#ifndef _H_EMULATOR_INPUTS
-#define _H_EMULATOR_INPUTS
+#pragma once
 
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
+#include <QObject>
 
 #include "definitions.h"
 #include "Singleton.h"
@@ -10,22 +8,21 @@
 
 class Graphics;
 
-class Inputs : public Singleton<Inputs>
+class Inputs : public QObject, public Singleton<Inputs>
 {
+    Q_OBJECT
 public:
     
     enum JoypadId : size_t { kJoypad1 = 0, kJoypad2 = 1 };
-    enum ControllerKey : size_t { CK_UP = 0, CK_DOWN = 1, CK_RIGHT = 2, CK_LEFT = 3, CK_FIREA = 4, CK_FIREB = 5 };
+    enum ControllerKey { CK_UP = 0, CK_DOWN = 1, CK_RIGHT = 2, CK_LEFT = 3, CK_FIREA = 4, CK_FIREB = 5 };
 
     Inputs();
-
-
-    void captureEventsInfo(sf::RenderWindow *app);
-    void captureEventsGame(sf::RenderWindow *app);
+    virtual ~Inputs() = default;
 
     // idController is 0 for Joypad 1 and 1 for Joypad 2
     bool controllerKeyPressed(JoypadId idController, ControllerKey key);
 
+    void requestStop();
     void switchDrawSprite();
     void switchInfoDisplayMode();
 
@@ -34,8 +31,11 @@ public:
 
     bool isStopRequested();
 
+protected:
+    bool eventFilter(QObject* obj, QEvent* event);
+
 private:
-    sf::Keyboard::Key _userKeys[6];
+    Qt::Key _userKeys[6];
     Debugger* _debugger;
     Graphics* _graphics;
 
@@ -45,5 +45,3 @@ private:
 
     int _infoDisplayMode;
 };
-
-#endif

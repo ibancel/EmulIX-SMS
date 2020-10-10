@@ -27,7 +27,9 @@ public:
 	Cartridge();
 
 	void insert(const std::string& filename);
+    bool isLoaded() const;
 	void readFromFile(const std::string& filename);
+    void remove();
 
 	uint8_t getBlock(int address);
 

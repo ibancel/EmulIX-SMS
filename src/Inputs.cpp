@@ -1,10 +1,14 @@
 #include "Inputs.h"
 
+#include <QEvent>
+#include <QKeyEvent>
+#include <QDebug>
+
 #include "Graphics.h"
 
 
-
 Inputs::Inputs() : 
+    QObject(nullptr),
 	_debugger{ Debugger::Instance() }, 
 	_graphics{ Graphics::Instance() }, 
 	_controller{ false },
@@ -12,81 +16,23 @@ Inputs::Inputs() :
 	_drawSprite{ true },
 	_isStopRequested{ false }
 {
-    _userKeys[ControllerKey::CK_UP]    = sf::Keyboard::Up;
-    _userKeys[ControllerKey::CK_DOWN]  = sf::Keyboard::Down;
-    _userKeys[ControllerKey::CK_RIGHT] = sf::Keyboard::Right;
-    _userKeys[ControllerKey::CK_LEFT]  = sf::Keyboard::Left;
-    _userKeys[ControllerKey::CK_FIREA] = sf::Keyboard::D;
-    _userKeys[ControllerKey::CK_FIREB] = sf::Keyboard::F;
-}
-
-
-void Inputs::captureEventsInfo(sf::RenderWindow *app)
-{
-	sf::Event event;
-	while (app->pollEvent(event))
-	{
-		if (event.type == sf::Event::Closed) {
-			_isStopRequested = true;
-			app->close();
-		} else if(event.type == sf::Event::KeyReleased) {
-			if(event.key.code == sf::Keyboard::Escape) {
-				_isStopRequested = true;
-				app->close();
-			}
-			if (event.key.code == sf::Keyboard::Numpad0 || event.key.code == sf::Keyboard::Num0) {
-				switchInfoDisplayMode();
-			}
-			if (event.key.code == sf::Keyboard::V) {
-				_graphics->dumpVram();
-			}
-			if (event.key.code == sf::Keyboard::R) {
-				Memory::Instance()->dumpRam();
-			}
-			_debugger->captureEvents(event);
-		}
-
-	}
-}
-
-void Inputs::captureEventsGame(sf::RenderWindow *app)
-{
-	sf::Event event;
-	while (app->pollEvent(event))
-	{
-		if (event.type == sf::Event::Closed) {
-			app->close();
-		} else if (event.type == sf::Event::KeyPressed) {
-			for (int i = 0; i < 6; i++) {
-				if (event.key.code == _userKeys[i]) {
-					_controller[JoypadId::kJoypad1][i] = true;
-				}
-			}
-        } else if(event.type == sf::Event::KeyReleased) {
-			for (int i = 0; i < 6; i++) {
-				if (event.key.code == _userKeys[i]) {
-					_controller[JoypadId::kJoypad1][i] = false;
-				}
-			}
-
-			if (event.key.code == sf::Keyboard::Escape) {
-				app->close();
-			}
-			if (event.key.code == sf::Keyboard::Numpad0 || event.key.code == sf::Keyboard::Num0) {
-				switchInfoDisplayMode();
-			}
-			if (event.key.code == sf::Keyboard::Numpad5 || event.key.code == sf::Keyboard::Num5) {
-				switchDrawSprite();
-			}
-			_debugger->captureEvents(event);
-		}
-
-	}
+    _userKeys[ControllerKey::CK_UP]    = Qt::Key_Up;
+    _userKeys[ControllerKey::CK_DOWN]  = Qt::Key_Down;
+    _userKeys[ControllerKey::CK_RIGHT] = Qt::Key_Right;
+    _userKeys[ControllerKey::CK_LEFT]  = Qt::Key_Left;
+    _userKeys[ControllerKey::CK_FIREA] = Qt::Key_D;
+    _userKeys[ControllerKey::CK_FIREB] = Qt::Key_F;
 }
 
 bool Inputs::controllerKeyPressed(JoypadId idController, ControllerKey cKey)
 {
+//    qDebug() << "test key " << idController << " : " << cKey << " = " << _controller[idController][cKey];
     return _controller[idController][cKey];
+}
+
+void Inputs::requestStop()
+{
+    _isStopRequested = true;
 }
 
 void Inputs::switchDrawSprite()
@@ -115,4 +61,46 @@ int Inputs::getInfoDisplayMode()
 bool Inputs::isStopRequested()
 {
 	return _isStopRequested;
+}
+
+// Protected:
+
+bool Inputs::eventFilter(QObject* obj, QEvent* event)
+{
+    if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        if(!keyEvent->isAutoRepeat()) {
+            int keyPressed = keyEvent->key();
+//            qDebug() << keyEvent->key() << " " << event->type() << " " << keyEvent->isAutoRepeat();
+            for (int i = 0; i < 6; i++) {
+                if (keyPressed == _userKeys[i]) {
+                    _controller[JoypadId::kJoypad1][i] = (event->type() == QEvent::KeyPress);
+                    return true;
+                }
+            }
+        }
+    }
+    if(event->type() == QEvent::KeyPress) {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        if(!keyEvent->isAutoRepeat()) {
+            int keyPressed = keyEvent->key();
+            if(keyPressed == Qt::Key_Escape) {
+                requestStop();
+//                app->close();
+            } else if (keyPressed == Qt::Key_0) {
+                switchInfoDisplayMode();
+            } else if(keyPressed == Qt::Key_5) {
+                switchDrawSprite();
+            } else if (keyPressed == Qt::Key_V) {
+                _graphics->dumpVram();
+            } else if (keyPressed == Qt::Key_R) {
+                Memory::Instance()->dumpRam();
+            }
+
+            _debugger->captureEvents(*keyEvent);
+            return true;
+        }
+    }
+
+    return QObject::eventFilter(obj, event);
 }
