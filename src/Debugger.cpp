@@ -55,7 +55,7 @@ Debugger::State Debugger::manage(uint_fast64_t iCurrentAddr)
 				continue;
 			}
 
-			uint8_t memoryValue = Memory::Instance()->read(watcher->getAddress());
+			u8 memoryValue = Memory::Instance()->read(watcher->getAddress());
 			if (memoryValue != watcher->getCurrentValue()) {
 				pause();
 				SLOG(ldebug << "Watcher " << watcher->getAddress() << " (" << _cycleCounter << ")");

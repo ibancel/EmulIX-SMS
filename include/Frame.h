@@ -1,22 +1,23 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
+
+#include "types.h"
 
 struct PixelColor
 {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
 
-    PixelColor(uint32_t col) {
+    PixelColor(u32 col) {
         r = (col >> 24) & 0xFF;
         g = (col >> 16) & 0xFF;
         b = (col >>  8) & 0xFF;
         a = (col >>  0) & 0xFF;
     }
-    PixelColor(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+    PixelColor(u8 red, u8 green, u8 blue, u8 alpha)
         : r{red},
           g{green},
           b{blue},
@@ -34,7 +35,7 @@ public:
     Frame(int width, int height, const PixelColor& color);
     virtual ~Frame();
 
-    const uint8_t* data(FrameOriginFormat iOriginFormat = FrameOriginFormat::kTopLeft);
+    const u8* data(FrameOriginFormat iOriginFormat = FrameOriginFormat::kTopLeft);
     int height() const { return _height; }
     PixelColor getBackdropColor();
     PixelColor getPixelColor(int x, int y);
@@ -46,11 +47,11 @@ public:
 private:
     PixelColor _backdropColor;
     int _height;
-    std::vector<uint8_t> _pixels;
-    std::vector<uint8_t> _pixelsBottom;
+    std::vector<u8> _pixels;
+    std::vector<u8> _pixelsBottom;
     int _width;
 
-    static void SetPixel(std::vector<uint8_t>& ioPixels, int iPixelIndex, const PixelColor& iColor);
+    static void SetPixel(std::vector<u8>& ioPixels, int iPixelIndex, const PixelColor& iColor);
     int pixelIndexToVectorIndex(int iPixelIndex, FrameOriginFormat iOriginFormat = FrameOriginFormat::kTopLeft);
     int posToPosIndex(int x, int y, FrameOriginFormat iOriginFormat = FrameOriginFormat::kTopLeft);
 };

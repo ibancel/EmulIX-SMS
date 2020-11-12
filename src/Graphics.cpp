@@ -58,12 +58,12 @@ void Graphics::syncThread()
 #endif
 }
 
-uint8_t Graphics::read(const uint8_t port)
+u8 Graphics::read(const u8 port)
 {
 	syncThread();
 
 	if (port == 0x7E) { // V counter
-		uint16_t vCounter = _graphicsThread.getCounterV();
+		u16 vCounter = _graphicsThread.getCounterV();
 		return (vCounter > 0xDA ? vCounter - 6 : vCounter);
 		// TODO other values NTSC/PAL
 		return 0;
@@ -73,13 +73,13 @@ uint8_t Graphics::read(const uint8_t port)
 	} else if (port == 0xBE) { // data port
 		_controlByte = 0;
 		// TODO verify
-		const uint8_t result = _readAheadBuffer;
+		const u8 result = _readAheadBuffer;
 		_readAheadBuffer = _graphicsThread.getVram(_addressVRAM);
 		incrementVramAddress();
 		return result;
 	}  else if (port == 0xBF) { // control port
 		_controlByte = 0;
-		const uint8_t retStatusRegister = _graphicsThread.getStatusRegister();
+		const u8 retStatusRegister = _graphicsThread.getStatusRegister();
 		_graphicsThread.setStatusRegisterBit(VDP::S_F, 0);
 		_graphicsThread.setStatusRegisterBit(VDP::S_C, 0);
 		if (getGraphicMode() != 2) {
@@ -88,18 +88,18 @@ uint8_t Graphics::read(const uint8_t port)
 		_graphicsThread.resetLineInterrupt();
 		return retStatusRegister;
 	} else {
-		SLOG_THROW(lwarning << hex << "Undefined Graphic port (" << static_cast<uint16_t>(port) << ") ");
+		SLOG_THROW(lwarning << hex << "Undefined Graphic port (" << static_cast<u16>(port) << ") ");
 	}
 
 	return 0;
 }
 
-uint8_t Graphics::write(const uint8_t port, const uint8_t data)
+u8 Graphics::write(const u8 port, const u8 data)
 {
 	if(port == 0xBE) // data port
 	{
-		//std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | write data=" << (uint16_t)data << " at " << _addressVRAM << " & coderegister=" << (uint16_t)_codeRegister << endl;
-		SLOG(ldebug << hex << "[VDP] write data=" << (uint16_t)data << " at " << _addressVRAM << " & coderegister=" << (uint16_t)_codeRegister);
+		//std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | write data=" << (u16)data << " at " << _addressVRAM << " & coderegister=" << (u16)_codeRegister << endl;
+		SLOG(ldebug << hex << "[VDP] write data=" << (u16)data << " at " << _addressVRAM << " & coderegister=" << (u16)_codeRegister);
 		if (_codeRegister == 3) {
 			_graphicsThread.setCram(_addressVRAM & 0b11111, data);
 		} else { // code == 0,1,2
@@ -124,24 +124,24 @@ uint8_t Graphics::write(const uint8_t port, const uint8_t data)
 			controlAction();
 		}
 	} else {
-		slog << lwarning << hex << "Undefined Graphic port (" << static_cast<uint16_t>(port) << ") " << endl;
+		slog << lwarning << hex << "Undefined Graphic port (" << static_cast<u16>(port) << ") " << endl;
 	}
 
 	return 0; // TODO
 }
 
-uint8_t Graphics::controlAction()
+u8 Graphics::controlAction()
 {
 	_codeRegister = (_controlCmd >> 14);
 
-	SLOG(ldebug << hex << "[VPD] control code:" << (uint16_t)_codeRegister);
+	SLOG(ldebug << hex << "[VPD] control code:" << (u16)_codeRegister);
 
 	if (_codeRegister != 2) {
 		_addressVRAM = _controlCmd & 0b00111111'11111111;
 		SLOG(ldebug << "[VDP] control new address: " << hex << _addressVRAM);
 	}
 
-	//std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | control code=" << (uint16_t)_codeRegister << " new address=" << _addressVRAM << endl;
+	//std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | control code=" << (u16)_codeRegister << " new address=" << _addressVRAM << endl;
 
 	if (_codeRegister == 0) {
 		// Read VRAM
@@ -150,13 +150,13 @@ uint8_t Graphics::controlAction()
 	} else if (_codeRegister == 1) {
 		// Write VRAM, address is set: nothing more
 	} else if (_codeRegister == 2) {
-		uint8_t num = ((_controlCmd & 0xF00) >> 8);
+		u8 num = ((_controlCmd & 0xF00) >> 8);
 		if (num < GRAPHIC_REGISTER_SIZE) {
 			_graphicsThread.setRegister(num,  _controlCmd & 0xFF);
 		}
 
-		SLOG(ldebug << hex << "[VDP] set r[" << (uint16_t)num << "] = " << (uint16_t)(_controlCmd & 0xFF));
-		SLOG(ldebug << hex << "[VDP] mode:" << (uint16_t)getBit8(_graphicsThread.getRegister(0), 2) << (uint16_t)getBit8(_graphicsThread.getRegister(1), 3) << (uint16_t)getBit8(_graphicsThread.getRegister(0), 1) << (uint16_t)getBit8(_graphicsThread.getRegister(1), 4));
+		SLOG(ldebug << hex << "[VDP] set r[" << (u16)num << "] = " << (u16)(_controlCmd & 0xFF));
+		SLOG(ldebug << hex << "[VDP] mode:" << (u16)getBit8(_graphicsThread.getRegister(0), 2) << (u16)getBit8(_graphicsThread.getRegister(1), 3) << (u16)getBit8(_graphicsThread.getRegister(0), 1) << (u16)getBit8(_graphicsThread.getRegister(1), 4));
 	} else if (_codeRegister == 3) {
 		// Read CRAM, address is set: nothing more
 	} else {
@@ -195,7 +195,7 @@ void Graphics::dumpVram()
 	} else if (DumpMode == 1) {
 		std::ofstream file("vdp_dump.txt", std::ios_base::out);
 		for (int i = 0; i < GRAPHIC_VRAM_SIZE; i++) {
-			file << std::hex << std::setfill('0') << std::uppercase << std::setw(2) << (uint16_t)(_graphicsThread.getVram(i)) << " ";
+			file << std::hex << std::setfill('0') << std::uppercase << std::setw(2) << (u16)(_graphicsThread.getVram(i)) << " ";
 			if (i != 0 && (i % 16) == 15) {
 				file << std::endl;
 			}
@@ -203,7 +203,7 @@ void Graphics::dumpVram()
 	}
 }
 
-uint8_t Graphics::getGraphicMode()
+u8 Graphics::getGraphicMode()
 {
 	return _actualMode;
 }
@@ -231,7 +231,7 @@ void Graphics::updateGraphicMode()
 		const bool mode3 = getBit8(_graphicsThread.getRegister(1), 3);
 		const bool mode4 = getBit8(_graphicsThread.getRegister(0), 2);
 
-		uint8_t aNewMode = _actualMode;
+		u8 aNewMode = _actualMode;
 
 		if (mode4) {
 			if (mode1 && mode2 && !mode3) {

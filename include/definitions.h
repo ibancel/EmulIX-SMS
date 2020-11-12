@@ -1,7 +1,8 @@
-#ifndef _H_EMULATOR_DEFINITIONS
-#define _H_EMULATOR_DEFINITIONS
+#pragma once
 
 #include <string>
+
+#include "types.h"
 
 #define DEBUG_MODE false || _DEBUG
 
@@ -33,7 +34,7 @@ namespace VDP {
     enum StatusBit { S_F = 7, S_OVR = 6, S_C = 5 };
     enum ColorBank { kFirst = 0, kSecond = 16 };
 }
-enum class SpriteSize : uint8_t { k8 = 0, k16 = 1 };
+enum class SpriteSize : u8 { k8 = 0, k16 = 1 };
 
 
 const std::string OPCODE_NAME[] = {
@@ -96,55 +97,53 @@ const std::string OPCODE_ED_NAME[] = {
     "LD I, A", "LD R,A", "LD A, I", "LD A, R", "RRD", "RLD", "NOP", "NOP"
 };
 
-std::string getOpcodeName(uint8_t prefix, uint8_t opcode);
+std::string getOpcodeName(u8 prefix, u8 opcode);
 
 // pos from 0 to 7 (with 7 MSB)
-inline uint8_t getBit8(uint8_t value, uint8_t pos) {
+inline u8 getBit8(u8 value, u8 pos) {
     return (value >> pos) & 0b1;
 }
 
 // value is the variable that will be changed
 // pos from 0 to 7 (with 7 MSB)
 // newBit can be 0 or 1 else can be true or false
-void setBit8(uint8_t* value, uint8_t pos, bool newBit);
+void setBit8(u8* value, u8 pos, bool newBit);
 
-void setBit16(uint16_t* value, uint8_t pos, bool newBit);
+void setBit16(u16* value, u8 pos, bool newBit);
 
 
 // extract 8 lowest bits of a 16 bits value
-inline uint8_t getLowerByte(uint16_t value) {
+inline u8 getLowerByte(u16 value) {
     return (value & 0xFF);
 }
 
-inline void setLowerByte(uint16_t &ioToSet, uint8_t byte) {
+inline void setLowerByte(u16 &ioToSet, u8 byte) {
     ioToSet = (ioToSet & 0xFF00) | byte;
 }
 
 // extract 8 hight bits of a 16 bits value
-inline uint8_t getHigherByte(uint16_t value) {
+inline u8 getHigherByte(u16 value) {
     return (value >> 8) & 0xFF;
 }
 
-inline void setHigherByte(uint16_t& ioToSet, uint8_t byte) {
+inline void setHigherByte(u16& ioToSet, u8 byte) {
     ioToSet = (ioToSet & 0x00FF) | (byte<<8);
 }
 
 
 // count of bits is even or odd ? (true=even)
-bool nbBitsEven(uint8_t byte);
+bool nbBitsEven(u8 byte);
 
-inline uint8_t sign8(uint8_t byte) {
+inline u8 sign8(u8 byte) {
     return byte >> 7;
 }
-inline uint16_t sign16(uint16_t word) {
+inline u16 sign16(u16 word) {
     return word >> 15;
 }
 
-inline bool isPositive8(uint8_t byte) {
+inline bool isPositive8(u8 byte) {
     return static_cast<bool>(sign8(byte));
 }
-inline bool isPositive16(uint16_t word) {
+inline bool isPositive16(u16 word) {
     return static_cast<bool>(sign16(word));
 }
-
-#endif

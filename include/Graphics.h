@@ -27,16 +27,16 @@ public:
 	void stopRunning();
 	void syncThread();
 
-	uint8_t read(const uint8_t port);
-	uint8_t write(const uint8_t port, const uint8_t data);
+	u8 read(const u8 port);
+	u8 write(const u8 port, const u8 data);
 
-	uint8_t controlAction();
+	u8 controlAction();
 
     void setGameWindow(GameWindow* iWindow);
 
 	void dumpVram();
 
-	uint8_t getGraphicMode();
+	u8 getGraphicMode();
 
 	bool getIE() {
 		return _graphicsThread.getIE();
@@ -56,13 +56,13 @@ protected:
 
 	GraphicsThread _graphicsThread;
 
-	uint16_t _addressVRAM;
-	uint8_t _codeRegister;
-	uint8_t _actualMode;
+	u16 _addressVRAM;
+	u8 _codeRegister;
+	u8 _actualMode;
 
-	uint8_t _controlByte;
-	uint16_t _controlCmd;
-	uint8_t _readAheadBuffer;
+	u8 _controlByte;
+	u16 _controlCmd;
+	u8 _readAheadBuffer;
 
 	// to remove
 	int _count;

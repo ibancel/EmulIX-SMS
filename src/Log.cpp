@@ -42,7 +42,7 @@ string Log::getTypeStr(type typeLog)
 	return "Undefined";
 }
 
-bool Log::isUniqueType(int16_t typeFlag)
+bool Log::isUniqueType(s16 typeFlag)
 {
 	int oneOccurence = 0;
 	for (int i = 0; i < 16; i++) {

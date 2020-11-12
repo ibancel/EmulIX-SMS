@@ -1,18 +1,17 @@
 #pragma once
 
-#include <cstdint>
-
+#include "types.h"
 class Watcher
 {
 public:
 	Watcher(const uint_fast16_t iAddress);
 
-	void setCurrentValue(uint8_t iValue);
+	void setCurrentValue(u8 iValue);
 
 	uint_fast16_t getAddress() const;
-	uint8_t getCurrentValue() const;
+	u8 getCurrentValue() const;
 	
 private:
 	uint_fast16_t _address;
-	uint8_t _currentValue;
+	u8 _currentValue;
 };

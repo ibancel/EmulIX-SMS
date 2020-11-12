@@ -44,21 +44,21 @@ public:
 	void reset();
 
 	int cycle();
-	int opcodeExecution(const uint8_t prefix, const uint8_t opcode);
+	int opcodeExecution(const u8 prefix, const u8 opcode);
 
-	void aluOperation(const uint8_t index, const uint8_t value);
-	void rotOperation(const uint8_t index, const uint8_t reg);
+	void aluOperation(const u8 index, const u8 value);
+	void rotOperation(const u8 index, const u8 reg);
 
 	// rw = true for write and false for read
-	uint8_t portCommunication(bool rw, uint8_t address, uint8_t data = 0);
+	u8 portCommunication(bool rw, u8 address, u8 data = 0);
 
 
 	//** GET **//
 
-	inline uint16_t getProgramCounter() const {
+	inline u16 getProgramCounter() const {
 		return _pc;
 	}
-	inline uint8_t getRegisterFlag() const {
+	inline u8 getRegisterFlag() const {
 		return _registerFlag;
 	}
 
@@ -72,21 +72,21 @@ private:
 	bool _isInitialized;
 
     // special registers
-	uint16_t _pc;
-	uint16_t _sp;
-	uint16_t _registerIX;
-	uint16_t _registerIY;
-	uint8_t _registerR;
-	uint8_t _registerI;
-	uint8_t _registerAluTemp;
+	u16 _pc;
+	u16 _sp;
+	u16 _registerIX;
+	u16 _registerIY;
+	u8 _registerR;
+	u8 _registerI;
+	u8 _registerAluTemp;
 
-	uint8_t _register[REGISTER_SIZE];
-	uint8_t _registerA[REGISTER_SIZE]; // Alternate register
-	uint8_t _registerFlag;
-	uint8_t _registerFlagA;
-	uint8_t _ioPortControl;
+	u8 _register[REGISTER_SIZE];
+	u8 _registerA[REGISTER_SIZE]; // Alternate register
+	u8 _registerFlag;
+	u8 _registerFlagA;
+	u8 _ioPortControl;
 
-	uint8_t _modeInt;
+	u8 _modeInt;
 
 	bool _IFF1; // Interrupt flip-flop
 	bool _IFF2; // Interrupt flip-flop
@@ -96,26 +96,26 @@ private:
 	bool _isBlockInstruction;
 	int _useRegisterIX;
 	int _useRegisterIY;
-	int8_t _cbDisplacement;
+	s8 _cbDisplacement;
 	bool _displacementForIndexUsed;
-	int8_t _displacementForIndex;
+	s8 _displacementForIndex;
 
 	int _cycleCount;
 
 
-	inline bool isPrefixByte(uint8_t byte) const {
+	inline bool isPrefixByte(u8 byte) const {
 		return (byte == 0xCB || byte == 0xDD || byte == 0xED || byte == 0xFD);
 	}
 
-	int opcode0(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	int opcodeCB(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	int opcodeED(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	int opcodeDD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
-	int opcodeFD(uint8_t x, uint8_t y, uint8_t z, uint8_t p, uint8_t q);
+	int opcode0(u8 x, u8 y, u8 z, u8 p, u8 q);
+	int opcodeCB(u8 x, u8 y, u8 z, u8 p, u8 q);
+	int opcodeED(u8 x, u8 y, u8 z, u8 p, u8 q);
+	int opcodeDD(u8 x, u8 y, u8 z, u8 p, u8 q);
+	int opcodeFD(u8 x, u8 y, u8 z, u8 p, u8 q);
 
-	bool condition(uint8_t code);
+	bool condition(u8 code);
 
-	int bliOperation(uint8_t x, uint8_t y);
+	int bliOperation(u8 x, u8 y);
 
 	int interrupt(bool nonMaskable = false);
 
@@ -150,44 +150,44 @@ private:
 		return (_useRegisterIX > 0) || (_useRegisterIY > 0);
 	}
 
-	uint8_t readMemoryHL(bool iUseIndex = true);
-	void writeMemoryHL(uint8_t iNewValue, bool iUseIndex = true);
-	int8_t retrieveIndexDisplacement();
+	u8 readMemoryHL(bool iUseIndex = true);
+	void writeMemoryHL(u8 iNewValue, bool iUseIndex = true);
+	s8 retrieveIndexDisplacement();
 	void incrementRefreshRegister();
 
 	// swaps:
-	void swapRegister(uint8_t code);
-	void swapRegisterPair(uint8_t code);
-	void swapRegisterPair2(uint8_t code);
+	void swapRegister(u8 code);
+	void swapRegisterPair(u8 code);
+	void swapRegisterPair2(u8 code);
 
 	// set:
-	void setRegister(uint8_t code, uint8_t value, bool alternate = false, bool useIndex = true);
-	void setRegisterPair(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
-	void setRegisterPair2(uint8_t code, uint16_t value, bool alternate = false, bool useIndex = true);
-	inline void setFlagBit(F_NAME f, uint8_t value) {
+	void setRegister(u8 code, u8 value, bool alternate = false, bool useIndex = true);
+	void setRegisterPair(u8 code, u16 value, bool alternate = false, bool useIndex = true);
+	void setRegisterPair2(u8 code, u16 value, bool alternate = false, bool useIndex = true);
+	inline void setFlagBit(F_NAME f, u8 value) {
 		if (value != 0) {
 			_registerFlag |= 1 << static_cast<uint_fast8_t>(f);
 		} else {
 			_registerFlag &= ~(1 << static_cast<uint_fast8_t>(f));
 		}
 	}
-	void setFlagMask(uint8_t mask, bool value) {
+	void setFlagMask(u8 mask, bool value) {
 		if (value) {
 			_registerFlag |= mask;
 		} else {
 			_registerFlag &= ~mask;
 		}
 	}
-	void setFlagUndoc(uint8_t value) {
+	void setFlagUndoc(u8 value) {
 		setFlagBit(F_F3, value & 0x08);
 		setFlagBit(F_F5, value & 0x20);
 	}
-	void setFlagUndocMethod2(uint8_t value) {
+	void setFlagUndocMethod2(u8 value) {
 		setFlagBit(F_F3, value & 0x08);
 		setFlagBit(F_F5, value & 0x02);
 	}
 
-	void setCBRegisterWithCopy(uint8_t iRegister, uint8_t iValue) {
+	void setCBRegisterWithCopy(u8 iRegister, u8 iValue) {
 		if (_useRegisterIX) {
 			_memory->write(_registerIX + _displacementForIndex, iValue);
 		} else if (_useRegisterIY) {
@@ -200,16 +200,16 @@ private:
 	}
 
 	// get:
-	const uint8_t getRegister(uint8_t code, bool alternate = false, bool useIndex = true);
-	uint16_t getRegisterPair(uint8_t code, bool alternate = false, bool useIndex = true);
-	uint16_t getRegisterPair2(uint8_t code, bool alternate = false, bool useIndex = true);
+	const u8 getRegister(u8 code, bool alternate = false, bool useIndex = true);
+	u16 getRegisterPair(u8 code, bool alternate = false, bool useIndex = true);
+	u16 getRegisterPair2(u8 code, bool alternate = false, bool useIndex = true);
 
-	inline uint8_t getAluTempByte() {
+	inline u8 getAluTempByte() {
 		return _registerAluTemp + _register[R_A];
 	}
 
 	inline bool getFlagBit(F_NAME f) const {
-		return (_registerFlag >> (uint8_t)f) & 1;
+		return (_registerFlag >> (u8)f) & 1;
 	}
 
 

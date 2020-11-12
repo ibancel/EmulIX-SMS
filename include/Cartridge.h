@@ -12,17 +12,17 @@
 class Memory;
 
 struct CartridgeHeader {
-	uint16_t checksum;
-	uint16_t productCode;
-	uint8_t version;
-	uint8_t regionCode;
-	uint8_t size;
+	u16 checksum;
+	u16 productCode;
+	u8 version;
+	u8 regionCode;
+	u8 size;
 };
 
 class Cartridge : public Singleton<Cartridge>
 {
 public:
-	static constexpr uint16_t RamSize = 0x8000;
+	static constexpr u16 RamSize = 0x8000;
 
 	Cartridge();
 
@@ -31,7 +31,7 @@ public:
 	void readFromFile(const std::string& filename);
     void remove();
 
-	uint8_t getBlock(int address);
+	u8 getBlock(int address);
 
 	inline size_t getSize() const noexcept {
 		return _data.size();
@@ -58,8 +58,8 @@ public:
 
 private:
 	bool _isLoaded;
-    std::vector<uint8_t> _data;
-	uint8_t _embeddedRam[Cartridge::RamSize];
+    std::vector<u8> _data;
+	u8 _embeddedRam[Cartridge::RamSize];
 	CartridgeHeader _header;
 
 	bool readHeader();

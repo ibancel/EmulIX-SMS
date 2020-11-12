@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <stdexcept>
+
+#include "types.h"
 
 class MemoryBank
 {
@@ -11,12 +12,12 @@ public:
 		// IMPORTANT: Should an empty bank be filled with 0s?
 	}
 
-	MemoryBank(uint8_t* const iBaseAddress, const size_t iSize) : _data{ iBaseAddress }, _size{ iSize }, _nullByte{ 0 }
+	MemoryBank(u8* const iBaseAddress, const size_t iSize) : _data{ iBaseAddress }, _size{ iSize }, _nullByte{ 0 }
 	{
 
 	}
 
-	inline uint8_t* const data() {
+	inline u8* const data() {
 		return _data;
 	}
 
@@ -24,12 +25,12 @@ public:
 		return _size;
 	}
 
-	uint8_t& at(const size_t index);
+	u8& at(const size_t index);
 	void removeStart(const size_t nbElementsToRemove);
 
 private:
-	uint8_t* _data;
+	u8* _data;
 	size_t _size;
 
-	uint8_t _nullByte;
+	u8 _nullByte;
 };

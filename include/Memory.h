@@ -22,15 +22,15 @@ public:
 
 	void init();
 
-	void write(uint16_t address, uint8_t value);
+	void write(u16 address, u8 value);
 
-	uint8_t read(uint16_t address);
+	u8 read(u16 address);
 
 	void dumpRam();
 
 private:
 	Cartridge* _cartridge;
-	uint8_t _memory[MEMORY_SIZE]; // Bank 0,1,2 empty here
+	u8 _memory[MEMORY_SIZE]; // Bank 0,1,2 empty here
 
 	// TODO: keep bank by attribute
 	MemoryBank _memoryBank0;

@@ -35,19 +35,19 @@ public:
 	void resetLineInterrupt();
 
 	// Gets:
-	uint16_t getCounterV();
-	uint8_t getRegister(uint8_t iIndex);
-	uint8_t getStatusRegister();
-	uint8_t getStatusRegisterBit(uint8_t position);
-	uint8_t getVram(uint16_t iAddress);
+	u16 getCounterV();
+	u8 getRegister(u8 iIndex);
+	u8 getStatusRegister();
+	u8 getStatusRegisterBit(u8 position);
+	u8 getVram(u16 iAddress);
 
 	// Sets:
-	void setCram(uint16_t iAddress, uint8_t iNewValue);
-	void setGraphicMode(uint8_t iNewMode);
-	void setRegister(uint8_t iIndex, uint8_t iNewValue);
-	void setStatusRegister(uint8_t iNewValue);
-	void setStatusRegisterBit(uint8_t position, bool newBit);
-	void setVram(uint16_t iAddress, uint8_t iNewValue);
+	void setCram(u16 iAddress, u8 iNewValue);
+	void setGraphicMode(u8 iNewMode);
+	void setRegister(u8 iIndex, u8 iNewValue);
+	void setStatusRegister(u8 iNewValue);
+	void setStatusRegisterBit(u8 position, bool newBit);
+	void setVram(u16 iAddress, u8 iNewValue);
     void setGameWindow(GameWindow* iWindow);
 
 
@@ -74,20 +74,20 @@ private:
 
     GameWindow* _gameWindow;
 
-	uint8_t _graphicMode;
-	uint8_t _register[GRAPHIC_REGISTER_SIZE];
-	uint8_t _statusRegister;
-	uint8_t _tempLineRegister;
-	uint8_t _vram[GRAPHIC_VRAM_SIZE];
-	uint8_t _cram[GRAPHIC_CRAM_SIZE];
+	u8 _graphicMode;
+	u8 _register[GRAPHIC_REGISTER_SIZE];
+	u8 _statusRegister;
+	u8 _tempLineRegister;
+	u8 _vram[GRAPHIC_VRAM_SIZE];
+	u8 _cram[GRAPHIC_CRAM_SIZE];
 
     Frame _frame;
 
 	long double _cpuStatesExecuted;
 
-	uint16_t _hCounter;
-	uint16_t _vCounter;
-	uint8_t _lineInterruptCounter;
+	u16 _hCounter;
+	u16 _vCounter;
+	u8 _lineInterruptCounter;
 	bool _lineInterruptFlag;
 
 	bool _isSynchronized;
@@ -119,60 +119,60 @@ private:
 	}
 
 	// NAME TABLE
-	inline uint16_t getNameTableAddress() {
+	inline u16 getNameTableAddress() {
 		// TODO: different for other resolutions
 		return (_register[2] & 0x0E) << 10;
 	}
-	uint8_t* const getNameTable(uint16_t memoryOffset = 0);
+	u8* const getNameTable(u16 memoryOffset = 0);
 
 	// COLOR TABLE
-	inline uint16_t getColorTableAddress() {
+	inline u16 getColorTableAddress() {
 		return _register[3] << 6;
 	}
-	uint8_t* const getColorTable(uint8_t memoryOffset = 0);
+	u8* const getColorTable(u8 memoryOffset = 0);
 
-	inline uint16_t getColorTableAddressMode2() {
+	inline u16 getColorTableAddressMode2() {
 		return (_register[3] & 0b1000'0000) << 6;
 	}
-	uint8_t* const getColorTableMode2(uint16_t memoryOffset = 0);
+	u8* const getColorTableMode2(u16 memoryOffset = 0);
 
 	// PATTERN GENERATOR TABLE
-	inline uint16_t getPatternGeneratorAddress() {
+	inline u16 getPatternGeneratorAddress() {
 		return (_register[4] & 0b111) * 0x800;
 	}
-	uint8_t* const getPatternGenerator(uint16_t memoryOffset = 0);
+	u8* const getPatternGenerator(u16 memoryOffset = 0);
 
-	inline uint16_t getPatternGeneratorAddressMode2() {
+	inline u16 getPatternGeneratorAddressMode2() {
 		return (_register[4] & 0b100) * 0x800;
 	}
-	uint8_t* const getPatternGeneratorMode2(uint16_t memoryOffset = 0);
+	u8* const getPatternGeneratorMode2(u16 memoryOffset = 0);
 
-	inline uint16_t getPatternGeneratorAddressMode4() {
+	inline u16 getPatternGeneratorAddressMode4() {
 		return 0;
 	}
-	uint8_t* const getPatternGeneratorMode4(uint16_t memoryOffset = 0);
+	u8* const getPatternGeneratorMode4(u16 memoryOffset = 0);
 
 	// SPRITE ATTRIBUTE TABLE
-	inline uint16_t getSpriteAttributeTableAddress() {
+	inline u16 getSpriteAttributeTableAddress() {
 		//return (_register[5] & 0b1111111) * 0x80;
 		return (_register[5] & 0x7E) << 7;
 	}
-	uint8_t* const getSpriteAttributeTable(uint8_t memoryOffset = 0);
+	u8* const getSpriteAttributeTable(u8 memoryOffset = 0);
 
 	// SPRITE PATTERN TABLE
 	// Also called Sprite Generator Table
-	inline uint16_t getSpritePatternTableAddress() {
+	inline u16 getSpritePatternTableAddress() {
 		return (_register[6] & 0b100) << 11;
 	}
-	uint8_t* const getSpritePatternTable(uint16_t memoryOffset = 0);
+	u8* const getSpritePatternTable(u16 memoryOffset = 0);
 
 
 
-	inline uint8_t getBackdropColor() const {
+	inline u8 getBackdropColor() const {
 		return (_register[7] & 0xF);
 	}
 
-	inline uint8_t getTextColor() const {
+	inline u8 getTextColor() const {
 		return (_register[7] >> 4);
 	}
 

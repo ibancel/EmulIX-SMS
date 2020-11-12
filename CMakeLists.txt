@@ -57,6 +57,7 @@ set(header_files
 	include/MemoryBank.h
 	include/Singleton.h
 	include/Stats.h
+        include/types.h
         include/ui/GameWindow.h
         include/ui/MainWindow.h
 	include/Watcher.h

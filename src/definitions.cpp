@@ -1,10 +1,10 @@
 #include "definitions.h"
 
-std::string getOpcodeName(uint8_t prefix, uint8_t opcode)
+std::string getOpcodeName(u8 prefix, u8 opcode)
 {
-	uint8_t x = ((opcode & 0b11000000) >> 6);
-	uint8_t y = ((opcode & 0b00111000) >> 3);
-	uint8_t z = (opcode & 0b00000111);
+	u8 x = ((opcode & 0b11000000) >> 6);
+	u8 y = ((opcode & 0b00111000) >> 3);
+	u8 z = (opcode & 0b00000111);
     if(prefix == 0xCB) {
         return OPCODE_CB_NAME[x];
 	} else if (prefix == 0xED) {
@@ -16,29 +16,29 @@ std::string getOpcodeName(uint8_t prefix, uint8_t opcode)
 		return OPCODE_ED_NAME[(z << 3) + y];
 	}
     // else:
-    uint8_t value = (x << 6) + (z << 3) + y;
+    u8 value = (x << 6) + (z << 3) + y;
     return OPCODE_NAME[value];
 }
 
 
-void setBit8(uint8_t* value, uint8_t pos, bool newBit)
+void setBit8(u8* value, u8 pos, bool newBit)
 {
 	if(!newBit)
-		*value &= ~(1 << (uint8_t)pos);
+		*value &= ~(1 << (u8)pos);
 	else
-		*value |= 1 << (uint8_t)pos;
+		*value |= 1 << (u8)pos;
 }
 
-void setBit16(uint16_t* value, uint8_t pos, bool newBit)
+void setBit16(u16* value, u8 pos, bool newBit)
 {
 	if (!newBit) {
-		*value &= ~(1 << (uint8_t)pos);
+		*value &= ~(1 << (u8)pos);
 	} else {
-		*value |= 1 << (uint8_t)pos;
+		*value |= 1 << (u8)pos;
 	}
 }
 
-bool nbBitsEven(uint8_t byte)
+bool nbBitsEven(u8 byte)
 {
 	byte ^= byte >> 4;
 	byte ^= byte >> 2;

@@ -1,7 +1,7 @@
 #include "MemoryBank.h"
 
 
-uint8_t& MemoryBank::at(const size_t index)
+u8& MemoryBank::at(const size_t index)
 {
 	if (index >= _size) {
 		//throw std::out_of_range("Index out of range");

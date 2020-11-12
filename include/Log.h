@@ -28,7 +28,7 @@
 class Log : public std::ostream
 {
 public:
-	enum type : int16_t { NONE = 0, NORMAL = 0b1, DEBUG = 0b10, NOTIF = 0b100, WARNING = 0b1000, ERROR = 0b1'0000, ALL = 0b1'1111 };
+	enum type : s16 { NONE = 0, NORMAL = 0b1, DEBUG = 0b10, NOTIF = 0b100, WARNING = 0b1000, ERROR = 0b1'0000, ALL = 0b1'1111 };
 
 	Log(std::string logPath = "log.txt") : std::ostream(&_buffer), _buffer(std::cout, logPath) { _currentType = type::NORMAL; };
 
@@ -110,7 +110,7 @@ public:
 
 	static std::string getTypeStr(type typeLog);
 
-	static bool isUniqueType(int16_t typeFlag);
+	static bool isUniqueType(s16 typeFlag);
 
 	bool changeType(type typeLog);
 	type getCurrentType() { return _currentType; };

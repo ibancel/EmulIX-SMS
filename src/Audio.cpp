@@ -26,9 +26,9 @@ Audio::Audio()
 	follows the documentation of:
 	http://www.smspower.org/uploads/Development/SN76489-20030421.txt?sid=abc441e2c56383ac7ece36d87afe0719
 */
-uint8_t Audio::write(uint8_t port, uint8_t data)
+u8 Audio::write(u8 port, u8 data)
 {
-	//slog << lerror << "audio: " << hex << (uint16_t)port << " | " << (uint16_t)data << endl;
+	//slog << lerror << "audio: " << hex << (u16)port << " | " << (u16)data << endl;
 
 	if(port == 0x7E || port == 0x7F)
 	{
@@ -98,7 +98,7 @@ void Audio::run()
 	}
 }
 
-void Audio::playSound(uint8_t indice)
+void Audio::playSound(u8 indice)
 {
    if(!soundActive) return;
 
@@ -122,7 +122,7 @@ void Audio::playSound(uint8_t indice)
 		x += increment;
 	}
 
-	//cout << hex << (uint16_t)indice << " - " << (uint16_t)_registerVol[indice] << " - " << (uint16_t)_registerTone[indice] << endl;
+	//cout << hex << (u16)indice << " - " << (u16)_registerVol[indice] << " - " << (u16)_registerTone[indice] << endl;
     if (!_buffer[indice].loadFromSamples(raw, 44100, 1, 44100)) {
         std::cerr << "Loading failed!" << std::endl;
     }

@@ -10,7 +10,7 @@ Watcher::Watcher(const uint_fast16_t iAddress) :
 }
 
 
-void Watcher::setCurrentValue(uint8_t iValue)
+void Watcher::setCurrentValue(u8 iValue)
 {
 	_currentValue = iValue;
 }
@@ -20,7 +20,7 @@ uint_fast16_t Watcher::getAddress() const
 	return _address;
 }
 
-uint8_t Watcher::getCurrentValue() const
+u8 Watcher::getCurrentValue() const
 {
 	return _currentValue;
 }

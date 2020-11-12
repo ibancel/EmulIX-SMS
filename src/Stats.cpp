@@ -10,7 +10,7 @@ long double Stats::cpuExecSpeed = 0.0;
 
 int Stats::opcodeOccur[];
 
-void Stats::add(uint8_t prefix, uint8_t opcode)
+void Stats::add(u8 prefix, u8 opcode)
 {
 	if(prefix == 0)
 		Stats::opcodeOccur[opcode]++;
@@ -46,7 +46,7 @@ int* Stats::getMost()
 }
 
 
-void Stats::addExecutionStat(uint8_t numberTStates, long double microsecondExecutionTime)
+void Stats::addExecutionStat(u8 numberTStates, long double microsecondExecutionTime)
 {
 	//if (microsecondExecutionTime <= 0) {
 	//	microsecondExecutionTime = numeric_limits<double>::lowest();

@@ -52,13 +52,13 @@ void Cartridge::readFromFile(const std::string& filename)
 	}
 
 	char h;
-	uint8_t val;
+	u8 val;
 	int counter = 0x0;
 
 	do
 	{
 		file.read(&h, sizeof(char));
-		val = static_cast<uint8_t>(h);
+		val = static_cast<u8>(h);
 		// cout << hex << (unsigned int)val << " ";
 		// SLOG(ldebug << hex << counter << " : " << (unsigned int)val << endl);
 
@@ -98,7 +98,7 @@ void Cartridge::remove()
     _isLoaded = false;
 }
 
-uint8_t Cartridge::getBlock(int address)
+u8 Cartridge::getBlock(int address)
 {
 	if (address < getSize()) {
 		return _data.at(address);
@@ -116,7 +116,7 @@ bool Cartridge::readHeader()
 		return false;
 	}
 
-	std::unique_ptr<uint8_t> headerContent{ new uint8_t[16] };
+	std::unique_ptr<u8> headerContent{ new u8[16] };
 	bool retrieved = false;
 	if (!retrieveHeaderContent(0x1ff0)) {
 		if (!retrieveHeaderContent(0x3ff0)) {
@@ -135,7 +135,7 @@ bool Cartridge::retrieveHeaderContent(int iAddress)
 		return false;
 	}
 
-	uint8_t headerBuffer[8] { 0 };
+	u8 headerBuffer[8] { 0 };
 	memcpy(headerBuffer, (_data.data()+iAddress), 8);
 
 	if (static_cast<bool>(memcmp(headerBuffer, "TMR SEGA", 8) == 0)) {

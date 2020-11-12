@@ -25,7 +25,7 @@ Frame::~Frame()
 
 }
 
-const uint8_t* Frame::data(FrameOriginFormat iOriginFormat)
+const u8* Frame::data(FrameOriginFormat iOriginFormat)
 {
     if(iOriginFormat == FrameOriginFormat::kTopLeft) {
         return _pixels.data();
@@ -41,7 +41,7 @@ PixelColor Frame::getBackdropColor()
 
 PixelColor Frame::getPixelColor(int x, int y)
 {
-    uint8_t* ptr = &_pixels[(y*_width+x)*4];
+    u8* ptr = &_pixels[(y*_width+x)*4];
     return *(reinterpret_cast<PixelColor*>(ptr));
 }
 
@@ -63,7 +63,7 @@ void Frame::setPixel(int iPixelIndex, const PixelColor& iColor)
 
 // Private
 
-void Frame::SetPixel(std::vector<uint8_t>& ioPixels, int iPixelIndex, const PixelColor& iColor)
+void Frame::SetPixel(std::vector<u8>& ioPixels, int iPixelIndex, const PixelColor& iColor)
 {
     ioPixels[iPixelIndex*4+0] = iColor.r;
     ioPixels[iPixelIndex*4+1] = iColor.g;

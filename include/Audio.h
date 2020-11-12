@@ -17,19 +17,19 @@ public:
 
 	Audio();
 
-	uint8_t read(uint8_t port);
-	uint8_t write(uint8_t port, uint8_t data);
+    u8 read(u8 port);
+    u8 write(u8 port, u8 data);
 
 	void run();
 
 private:
 
-	uint8_t _registerVol[4];  // Volume
-	uint16_t _registerTone[4]; // Tone/noise
+    u8 _registerVol[4];  // Volume
+    u16 _registerTone[4]; // Tone/noise
 	sf::Int16 _output[4];
 	float _counter[4];
 
-	uint8_t _registerLatch;
+    u8 _registerLatch;
 
 	int _inputClock;
 
@@ -40,7 +40,7 @@ private:
 
 
 	/// functions:
-	void playSound(uint8_t indice);
+    void playSound(u8 indice);
 
 };
 

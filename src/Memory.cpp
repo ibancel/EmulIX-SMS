@@ -35,7 +35,7 @@ void Memory::init()
 	switchRamBank();
 }
 
-void Memory::write(uint16_t address, uint8_t value) {
+void Memory::write(u16 address, u8 value) {
 	if (address < 0x400) {
 		// Cannot write in banks 0 and 1
 	} else if (address < 0xC000) {
@@ -56,19 +56,19 @@ void Memory::write(uint16_t address, uint8_t value) {
 				NOT_IMPLEMENTED("Bank shifting");
 			}
 		} else if (address == Paging_Reg::kBank0) {
-			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(0);
 		} else if (address == Paging_Reg::kBank1) {
-			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(1);
 		} else if (address == Paging_Reg::kBank2) {
-			uint8_t nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
 			if (nbCartridgeBlock > 0x0F) {
 				value &= ((nbCartridgeBlock & 0xF0) | 0x0F);
 			} else {
@@ -83,7 +83,7 @@ void Memory::write(uint16_t address, uint8_t value) {
 	}
 }
 
-uint8_t Memory::read(uint16_t address) {
+u8 Memory::read(u16 address) {
 	if (address < 0x400) {
 		return _memory[address];
 	} else if (address < 0x4000) {
@@ -117,7 +117,7 @@ void Memory::dumpRam()
 	} else if (DumpMode == 1) {
 		std::ofstream file("ram_dump.txt", std::ios_base::out);
 		for (int i = 0; i < MEMORY_SIZE; i++) {
-			file << std::hex << std::setfill('0') << std::uppercase << std::setw(2) << (uint16_t)(read(i)) << " ";
+			file << std::hex << std::setfill('0') << std::uppercase << std::setw(2) << (u16)(read(i)) << " ";
 			if (i != 0 && (i % 16) == 15) {
 				file << std::endl;
 			}
