@@ -8,8 +8,9 @@
 #include "Log.h"
 #include "Singleton.h"
 #include "MemoryBank.h"
+#include "System.h"
 
-class Memory;
+class System;
 
 struct CartridgeHeader {
 	u16 checksum;
@@ -19,12 +20,12 @@ struct CartridgeHeader {
 	u8 size;
 };
 
-class Cartridge : public Singleton<Cartridge>
+class Cartridge
 {
 public:
 	static constexpr u16 RamSize = 0x8000;
 
-	Cartridge();
+    Cartridge(System& parent);
 
 	void insert(const std::string& filename);
     bool isLoaded() const;
@@ -61,6 +62,7 @@ private:
     std::vector<u8> _data;
 	u8 _embeddedRam[Cartridge::RamSize];
 	CartridgeHeader _header;
+    System& _system;
 
 	bool readHeader();
 	bool retrieveHeaderContent(int iAddress);

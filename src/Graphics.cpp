@@ -3,6 +3,7 @@
 #include <iomanip>
 
 #include "GraphicsThread.h"
+#include "System.h"
 
 using namespace std;
 
@@ -10,10 +11,8 @@ using namespace std;
 float Graphics::RatioSize = 2.0f;
 
 
-Graphics::Graphics()
+Graphics::Graphics(System& parent) : _memory{parent.getMemory()}
 {
-    _memory = Memory::Instance();
-
     _addressVRAM = 0;
     _codeRegister = 0;
     _actualMode = 0;
@@ -22,8 +21,6 @@ Graphics::Graphics()
     _readAheadBuffer = 0;
 
     _debugDrawSprite = true;
-
-    reset();
 }
 
 void Graphics::reset()

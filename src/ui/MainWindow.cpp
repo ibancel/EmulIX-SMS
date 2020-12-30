@@ -16,6 +16,7 @@
 #include "Graphics.h"
 #include "Inputs.h"
 #include "Log.h"
+#include "System.h"
 #include "ui/GameWindow.h"
 
 
@@ -29,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowTitle("EmulIX MasterSystem");
     loadGameLibrary();
+
+    _system = std::make_unique<System>();
 
     connect(this, &MainWindow::signal_systemThreadTerminated, this, &MainWindow::slot_systemThreadTerminated);
 }
@@ -45,12 +48,20 @@ MainWindow::~MainWindow()
 void MainWindow::quit()
 {
     stopSystemThread();
-    close();
 }
 
 void MainWindow::slot_systemThreadTerminated()
 {
-    stopSystemThread();
+    if(_gameWindow) {
+        _gameWindow->close();
+    }
+
+    ui->listWidget_gameLibrary->setEnabled(true);
+    ui->pushButton_play->setEnabled(true);
+    ui->pushButton_stop->setEnabled(false);
+
+//    _system->getCartridge().ptr()->remove();
+    _system = std::make_unique<System>();
 }
 
 void MainWindow::on_actionAbout_qt_triggered()
@@ -114,22 +125,24 @@ void MainWindow::on_pushButton_loadFile_clicked()
 
 void MainWindow::on_pushButton_play_clicked()
 {
-    if(ui->listWidget_gameLibrary->currentRow() == -1 || Cartridge::Instance()->isLoaded()) {
+    if(ui->listWidget_gameLibrary->currentRow() == -1) {
         return;
     }
-    Cartridge::Instance()->insert(ui->listWidget_gameLibrary->currentItem()->text().toStdString());
+    if(!_system->getCartridge().ptr()->isLoaded()) {
+        _system->getCartridge().ptr()->insert(ui->listWidget_gameLibrary->currentItem()->text().toStdString());
+    }
     startSystemThread();
 }
 
 void MainWindow::on_pushButton_quit_clicked()
 {
     quit();
+    close();
 }
 
 void MainWindow::on_pushButton_stop_clicked()
 {
     stopSystemThread();
-    Cartridge::Instance()->remove();
 }
 
 // Private:
@@ -163,6 +176,7 @@ void MainWindow::startSystemThread()
             _systemThread.join();
         }
         _systemRunning = true;
+        Inputs::Instance()->aknowledgeStopRequest();
         _gameWindow = std::make_unique<GameWindow>();
         _gameWindow->setResolution(GRAPHIC_WIDTH, GRAPHIC_HEIGHT);
         _gameWindow->setGeometry(
@@ -174,7 +188,7 @@ void MainWindow::startSystemThread()
                )
         );
         _gameWindow->show();
-        Graphics::Instance()->setGameWindow(_gameWindow.get());
+        _system->getGraphics().ptr()->setGameWindow(_gameWindow.get());
         _systemThread = std::thread(&MainWindow::systemThread, this);
     }
 }
@@ -185,19 +199,11 @@ void MainWindow::stopSystemThread()
     if(_systemThread.joinable()) {
         _systemThread.join();
     }
-
-    if(_gameWindow) {
-        _gameWindow->close();
-    }
-
-    ui->listWidget_gameLibrary->setEnabled(true);
-    ui->pushButton_play->setEnabled(true);
-    ui->pushButton_stop->setEnabled(false);
 }
 
 void MainWindow::systemThread()
 {
-    using namespace std;
+    using namespace std::literals::chrono_literals;
 
     Graphics::RatioSize = 1.0f;
 
@@ -213,23 +219,21 @@ void MainWindow::systemThread()
     Log::exitOnWarning = true;
 
     Inputs *inputs = Inputs::Instance();
-    Cartridge *cartridge = Cartridge::Instance();
-    Memory *mem = Memory::Instance();
-    Graphics *g = Graphics::Instance();
-
-    CPU *cpu = CPU::Instance();
+    Graphics* g = _system->getGraphics().ptr();
+    CPU* cpu = _system->getCpu().ptr();
 
     Debugger* debugger = Debugger::Instance();
     // Example of breakpoints:
     //debugger->addBreakpoint(std::make_unique<Breakpoint>(Breakpoint::Type::kNumInstruction, 1234));
     //debugger->addBreakpoint(std::make_unique<Breakpoint>(Breakpoint::Type::kAddress, 0x4321));
 
+    g->startRunning();
     cpu->init();
 
     double offsetTiming = 0.0;
 
-    std::chrono::time_point<std::chrono::steady_clock> chronoSync = chrono::steady_clock::now();
-    chrono::duration<long double, std::micro> intervalCycle;
+    std::chrono::time_point<std::chrono::steady_clock> chronoSync = std::chrono::steady_clock::now();
+    std::chrono::duration<long double, std::micro> intervalCycle;
     while (_systemRunning && !inputs->isStopRequested())
     {
         int nbTStates = 0;
@@ -246,18 +250,18 @@ void MainWindow::systemThread()
 
         const long double expectedExecTime = nbTStates * CPU::MicrosecondPerState;
 
-        intervalCycle = chrono::steady_clock::now() - chronoSync;
+        intervalCycle = std::chrono::steady_clock::now() - chronoSync;
         Stats::addExecutionStat(nbTStates, intervalCycle.count());
 
         while (intervalCycle.count() < expectedExecTime) {
-            intervalCycle = chrono::steady_clock::now() - chronoSync;
+            intervalCycle = std::chrono::steady_clock::now() - chronoSync;
         }
 
-        chronoSync = chrono::steady_clock::now();
+        chronoSync = std::chrono::steady_clock::now();
     }
 
     g->stopRunning();
 
-    emit(signal_systemThreadTerminated());
     _systemRunning = false;
+    emit(signal_systemThreadTerminated());
 }

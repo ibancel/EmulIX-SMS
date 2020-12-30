@@ -9,9 +9,9 @@
 
 #include "Log.h"
 #include "Memory.h"
+#include "System.h"
 
-
-Cartridge::Cartridge() : _embeddedRam{0}, _header{}
+Cartridge::Cartridge(System& parent) : _system{parent}, _embeddedRam{0}, _header{}
 {
 	_data.clear();
 	_isLoaded = false;
@@ -37,8 +37,6 @@ void Cartridge::readFromFile(const std::string& filename)
 	_data.clear();
 	
 	_isLoaded = false;
-
-	Memory *ram = Memory::Instance();
 
 	std::ifstream file(filename, std::ios_base::in | std::ios_base::binary);
 
@@ -71,7 +69,7 @@ void Cartridge::readFromFile(const std::string& filename)
 		// For the moment we just copy data in both memory
 		_data.push_back(val);
 		if (counter < 0x400) {
-			ram->write(counter, val);
+            _system.getMemory().ptr()->write(counter, val);
 		}
 		counter++;
 	} while (counter > 0); // Test 0 for overflow

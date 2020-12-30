@@ -36,6 +36,7 @@ set(source_files
 	src/Memory.cpp
 	src/MemoryBank.cpp
 	src/Stats.cpp
+        src/System.cpp
         src/ui/GameWindow.cpp
         src/ui/MainWindow.cpp
 	src/Watcher.cpp
@@ -57,6 +58,8 @@ set(header_files
 	include/MemoryBank.h
 	include/Singleton.h
 	include/Stats.h
+        include/System.h
+        include/SystemComponent.h
         include/types.h
         include/ui/GameWindow.h
         include/ui/MainWindow.h

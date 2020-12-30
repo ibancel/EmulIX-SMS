@@ -5,15 +5,16 @@
 #include <iomanip>
 #include <sstream>
 
+#include "Cartridge.h"
+#include "Memory.h"
+#include "System.h"
+
 using namespace std;
 
-
-CPU::CPU() : CPU(Memory::Instance(), Graphics::Instance(), Cartridge::Instance())
-{
-
-}
-
-CPU::CPU(Memory* m, Graphics* g, Cartridge* c) :
+CPU::CPU(System& parent) :
+    _cartridgeRef{parent.getCartridge()},
+    _graphicsRef{parent.getGraphics()},
+    _memoryRef{parent.getMemory()},
 	_IFF1{ false },
 	_IFF2{ false },
 	_pc{ 0 },
@@ -28,10 +29,6 @@ CPU::CPU(Memory* m, Graphics* g, Cartridge* c) :
 	_registerAluTemp{ 0 }
 	
 {
-	_memory = m;
-	_graphics = g;
-	_cartridge = c;
-
     // TODO(ibancel): Audio
     // _audio = new Audio(); // for the moment !
 	_inputs = Inputs::Instance();
@@ -41,7 +38,10 @@ CPU::CPU(Memory* m, Graphics* g, Cartridge* c) :
 
 void CPU::init()
 {
-	_memory->init();
+    _cartridge = _cartridgeRef.ptr();
+    _graphics = _graphicsRef.ptr();
+    _memory = _memoryRef.ptr();
+    _memory->init();
 
 	_pc = 0x00; // reset (at $0000), IRQs (at $0038) and NMIs (at $0066)
 	_sp = 0xFDD0;
@@ -75,8 +75,8 @@ void CPU::init()
 	_isBlockInstruction = false;
 
 	_cycleCount = 5;
-	_graphics->addCpuStates(_cycleCount);
-	_graphics->syncThread();
+    _graphics->addCpuStates(_cycleCount);
+    _graphics->syncThread();
 
 	// HACK FOR CERTAIN ROMS THAT NEED BIOS
 	setRegisterPair2(RP2_AF, 0xFFFF);
@@ -109,8 +109,8 @@ void CPU::reset()
 	_ioPortControl = 0;
 
 	_cycleCount = 5;
-	_graphics->addCpuStates(_cycleCount);
-	_graphics->syncThread();
+    _graphics->addCpuStates(_cycleCount);
+    _graphics->syncThread();
 
 	_displacementForIndexUsed = false;
 	_displacementForIndex = 0;
@@ -126,7 +126,7 @@ int CPU::cycle()
 	int nbStates = 0;
 	bool canExecute = true;
 
-	if(_enableInterruptWaiting == 0 && !_isBlockInstruction && _graphics->getIE()) {
+    if(_enableInterruptWaiting == 0 && !_isBlockInstruction && _graphics->getIE()) {
 		nbStates = interrupt();
 		if (nbStates > 0) {
 			canExecute = false;
@@ -1940,6 +1940,18 @@ void CPU::setRegisterPair2(u8 code, u16 value, bool alternate, bool useIndex)
 	}
 
 	SLOG(ldebug << hex << "set RP2[" << (u16)code << "] = " << value);
+}
+
+void CPU::setCBRegisterWithCopy(u8 iRegister, u8 iValue) {
+    if (_useRegisterIX) {
+        _memory->write(_registerIX + _displacementForIndex, iValue);
+    } else if (_useRegisterIY) {
+        _memory->write(_registerIY + _displacementForIndex, iValue);
+    }
+
+    if (!isIndexUsed() || iRegister != 6) {
+        setRegister(iRegister, iValue, false, false);
+    }
 }
 
 

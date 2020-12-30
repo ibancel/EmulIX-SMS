@@ -6,7 +6,8 @@
 #include "Log.h"
 #include "Memory.h"
 
-Debugger::Debugger() : _instructionCounter{ 0 }, _cycleCounter{ 5 }, _requestStep{ false }, _actualState{ State::kRunning }
+// TODO(ibancel): singleton
+Debugger::Debugger() : _memory{nullptr}, _instructionCounter{ 0 }, _cycleCounter{ 5 }, _requestStep{ false }, _actualState{ State::kRunning }
 {
 
 }
@@ -55,7 +56,7 @@ Debugger::State Debugger::manage(uint_fast64_t iCurrentAddr)
 				continue;
 			}
 
-			u8 memoryValue = Memory::Instance()->read(watcher->getAddress());
+            u8 memoryValue = _memory->read(watcher->getAddress());
 			if (memoryValue != watcher->getCurrentValue()) {
 				pause();
 				SLOG(ldebug << "Watcher " << watcher->getAddress() << " (" << _cycleCounter << ")");

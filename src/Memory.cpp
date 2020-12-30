@@ -8,10 +8,11 @@
 #include "Log.h"
 #include "Cartridge.h"
 #include "MemoryBank.h"
+#include "System.h"
+#include "SystemComponent.h"
 
-Memory::Memory()
+Memory::Memory(System& parent) : SystemComponent(parent)
 {
-	_cartridge = Cartridge::Instance();
 	init();
 }
 
@@ -19,9 +20,9 @@ void Memory::init()
 {
 	for (int i = 0; i < MEMORY_SIZE; i++) {
 		if (i < 0x400) {
-			_memory[i] = _cartridge->getBlock(i);
+            _memory[i] = _system.getCartridge().ptr()->getBlock(i);
 		} else {
-			_memory[i] = 0;
+            _memory[i] = 0;
 		}
 	}
 
@@ -56,19 +57,19 @@ void Memory::write(u16 address, u8 value) {
 				NOT_IMPLEMENTED("Bank shifting");
 			}
 		} else if (address == Paging_Reg::kBank0) {
-			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+            u8 nbCartridgeBlock = static_cast<int>(_system.getCartridge().ptr()->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(0);
 		} else if (address == Paging_Reg::kBank1) {
-			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+            u8 nbCartridgeBlock = static_cast<int>(_system.getCartridge().ptr()->getSize()) / 0x4000;
 			value = value & ((nbCartridgeBlock & 0xF0) | 0x0F);
 			_memory[address] = value;
 			_memory[address - 0x2000] = value;
 			switchBank(1);
 		} else if (address == Paging_Reg::kBank2) {
-			u8 nbCartridgeBlock = static_cast<int>(_cartridge->getSize()) / 0x4000;
+            u8 nbCartridgeBlock = static_cast<int>(_system.getCartridge().ptr()->getSize()) / 0x4000;
 			if (nbCartridgeBlock > 0x0F) {
 				value &= ((nbCartridgeBlock & 0xF0) | 0x0F);
 			} else {
@@ -142,15 +143,15 @@ void Memory::switchBank(const int iBankIndex)
 	assert(iBankIndex >= 0 && iBankIndex < 3);
 
 	if(iBankIndex == 0) {
-		_memoryBank0 = _cartridge->getBank(_memory[Paging_Reg::kBank0] * 0x4000);
+        _memoryBank0 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank0] * 0x4000);
 	} else if(iBankIndex == 1) {
-		_memoryBank1 = _cartridge->getBank(_memory[Paging_Reg::kBank1] * 0x4000);
+        _memoryBank1 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank1] * 0x4000);
 	} else if(iBankIndex == 2) {
-		_memoryBank2 = _cartridge->getBank(_memory[Paging_Reg::kBank2] * 0x4000);
+        _memoryBank2 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank2] * 0x4000);
 	}
 }
 
 void Memory::switchRamBank()
 {
-	_ramBank = _cartridge->getRamBank(getBit8(_memory[Paging_Reg::kRamSelect], 2));
+    _ramBank = _system.getCartridge().ptr()->getRamBank(getBit8(_memory[Paging_Reg::kRamSelect], 2));
 }

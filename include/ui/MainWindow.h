@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QSettings>
 
+#include "System.h"
 #include "ui/GameWindow.h"
 
 QT_BEGIN_NAMESPACE
@@ -42,6 +43,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QSettings _settings;
+    std::unique_ptr<System> _system;
     bool _systemRunning;
     std::unique_ptr<GameWindow> _gameWindow;
     std::thread _systemThread;

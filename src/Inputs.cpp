@@ -4,13 +4,15 @@
 #include <QKeyEvent>
 #include <QDebug>
 
+#include "Debugger.h"
 #include "Graphics.h"
 
 
 Inputs::Inputs() : 
     QObject(nullptr),
 	_debugger{ Debugger::Instance() }, 
-	_graphics{ Graphics::Instance() }, 
+    // TODO(ibancel): singleton
+    _graphics{ nullptr },
 	_controller{ false },
 	_infoDisplayMode{ 0 },
 	_drawSprite{ true },
@@ -22,6 +24,11 @@ Inputs::Inputs() :
     _userKeys[ControllerKey::CK_LEFT]  = Qt::Key_Left;
     _userKeys[ControllerKey::CK_FIREA] = Qt::Key_D;
     _userKeys[ControllerKey::CK_FIREB] = Qt::Key_F;
+}
+
+void Inputs::aknowledgeStopRequest()
+{
+    _isStopRequested = false;
 }
 
 bool Inputs::controllerKeyPressed(JoypadId idController, ControllerKey cKey)
@@ -94,7 +101,8 @@ bool Inputs::eventFilter(QObject* obj, QEvent* event)
             } else if (keyPressed == Qt::Key_V) {
                 _graphics->dumpVram();
             } else if (keyPressed == Qt::Key_R) {
-                Memory::Instance()->dumpRam();
+                // TODO(ibancel): singleton
+//                Memory::Instance()->dumpRam();
             }
 
             _debugger->captureEvents(*keyEvent);

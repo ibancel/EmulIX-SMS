@@ -1,5 +1,4 @@
-#ifndef _H_EMULATOR_GRAPHICS
-#define _H_EMULATOR_GRAPHICS
+#pragma once
 
 #include <chrono>
 
@@ -7,11 +6,13 @@
 #include "Memory.h"
 #include "Log.h"
 #include "Stats.h"
-#include "CPU.h"
+#include "System.h"
+#include "types.h"
 
-class CPU;
+class Memory;
+class System;
 
-class Graphics : public Singleton<Graphics>
+class Graphics
 {
 public:
 	//static constexpr long double PixelFrequency = 5'376'240.0 * TIME_SCALE; // NTSC
@@ -19,7 +20,7 @@ public:
 	static constexpr long double PixelFrequency = BaseFrequency / 2.0;
 	static float RatioSize;
 
-	Graphics();
+    Graphics(System& parent);
 
 	void reset();
 
@@ -52,7 +53,7 @@ public:
 #endif
 
 protected:
-	Memory *_memory;
+    PtrRef<Memory> _memory;
 
 	GraphicsThread _graphicsThread;
 
@@ -77,5 +78,3 @@ protected:
 		}
 	}
 };
-
-#endif

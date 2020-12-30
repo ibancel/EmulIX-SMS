@@ -1,35 +1,33 @@
-#ifndef _H_EMULATOR_MEMORY
-#define _H_EMULATOR_MEMORY
+#pragma once
 
 #include <cstdint>
 
 #include "definitions.h"
-#include "Singleton.h"
-#include "Cartridge.h"
 #include "Log.h"
+#include "MemoryBank.h"
+#include "System.h"
+#include "SystemComponent.h"
 
 class MemoryBank;
-class Cartridge;
+class System;
 
-
-class Memory : public Singleton<Memory>
+class Memory : public SystemComponent
 {
 public:
 
 	enum Paging_Reg { kRamSelect = 0xFFFC, kBank0 = 0xFFFD, kBank1 = 0xFFFE, kBank2 = 0xFFFF };
 
-	Memory();
+    Memory(System& parent);
 
 	void init();
 
-	void write(u16 address, u8 value);
+    virtual void write(u16 address, u8 value) override;
 
-	u8 read(u16 address);
+    virtual u8 read(u16 address) override;
 
 	void dumpRam();
 
 private:
-	Cartridge* _cartridge;
 	u8 _memory[MEMORY_SIZE]; // Bank 0,1,2 empty here
 
 	// TODO: keep bank by attribute
@@ -45,5 +43,3 @@ private:
 	void switchBank(const int iBankIndex);
 	void switchRamBank();
 };
-
-#endif

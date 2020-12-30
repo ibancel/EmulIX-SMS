@@ -13,6 +13,7 @@
 #include "Inputs.h"
 #include "Stats.h"
 #include "Singleton.h"
+#include "System.h"
 
 struct resInstruction
 {
@@ -27,9 +28,12 @@ enum F_NAME { F_C = 0, F_N = 1, F_P = 2, F_F3 = 3, F_H = 4, F_F5 = 5, F_Z = 6, F
 enum F_NAME_MASK { F_C_MASK = 0x01, F_N_MASK = 0x02, F_P_MASK = 0x04, F_F3_MASK = 0x08, F_H_MASK = 0x10, F_F5_MASK = 0x20, F_Z_MASK = 0x40, F_S_MASK = 0x80
 };
 
+class Cartridge;
 class Graphics;
+class Inputs;
+class Memory;
 
-class CPU : public Singleton<CPU>
+class CPU
 {
 
 public:
@@ -37,8 +41,7 @@ public:
 	static constexpr double Frequency = BaseFrequency / 3.0; // in Hz = cycle/s
 	static constexpr long double MicrosecondPerState = 1.0 / (Frequency/1'000'000.0);
 
-	CPU();
-	CPU(Memory *m, Graphics *g, Cartridge *c);
+    CPU(System& parent);
 
 	void init();
 	void reset();
@@ -63,10 +66,13 @@ public:
 	}
 
 private:
-	Memory *_memory;
-	Graphics *_graphics;
-	Cartridge *_cartridge;
-    //Audio *_audio;
+    PtrRef<Memory> _memoryRef;
+    PtrRef<Graphics> _graphicsRef;
+    PtrRef<Cartridge> _cartridgeRef;
+    Memory* _memory;
+    Graphics* _graphics;
+    Cartridge* _cartridge;
+    Audio *_audio;
 	Inputs *_inputs;
 
 	bool _isInitialized;
@@ -187,17 +193,7 @@ private:
 		setFlagBit(F_F5, value & 0x02);
 	}
 
-	void setCBRegisterWithCopy(u8 iRegister, u8 iValue) {
-		if (_useRegisterIX) {
-			_memory->write(_registerIX + _displacementForIndex, iValue);
-		} else if (_useRegisterIY) {
-			_memory->write(_registerIY + _displacementForIndex, iValue);
-		}
-
-		if (!isIndexUsed() || iRegister != 6) {
-			setRegister(iRegister, iValue, false, false);
-		}
-	}
+    void setCBRegisterWithCopy(u8 iRegister, u8 iValue);
 
 	// get:
 	const u8 getRegister(u8 code, bool alternate = false, bool useIndex = true);

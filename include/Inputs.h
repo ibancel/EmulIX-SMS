@@ -3,9 +3,11 @@
 #include <QObject>
 
 #include "definitions.h"
-#include "Singleton.h"
 #include "Debugger.h"
+#include "Graphics.h"
+#include "Singleton.h"
 
+class Debugger;
 class Graphics;
 
 class Inputs : public QObject, public Singleton<Inputs>
@@ -18,6 +20,8 @@ public:
 
     Inputs();
     virtual ~Inputs() = default;
+
+    void aknowledgeStopRequest();
 
     // idController is 0 for Joypad 1 and 1 for Joypad 2
     bool controllerKeyPressed(JoypadId idController, ControllerKey key);
