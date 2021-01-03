@@ -31,6 +31,7 @@ private slots:
     void on_actionAbout_triggered();
     void on_actionPlay_triggered();
     void on_actionQuit_triggered();
+    void on_actionSettings_triggered();
     void on_listWidget_gameLibrary_currentRowChanged(int currentRow);
     void on_pushButton_browseBios_clicked();
     void on_pushButton_clearLibrary_clicked();
@@ -38,7 +39,6 @@ private slots:
     void on_pushButton_play_clicked();
     void on_pushButton_quit_clicked();
     void on_pushButton_stop_clicked();
-
 
 private:
     Ui::MainWindow *ui;

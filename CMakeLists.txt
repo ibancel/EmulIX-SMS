@@ -39,6 +39,7 @@ set(source_files
         src/System.cpp
         src/ui/GameWindow.cpp
         src/ui/MainWindow.cpp
+        src/ui/SettingsInputsWindow.cpp
 	src/Watcher.cpp
 )
 set(header_files
@@ -63,11 +64,13 @@ set(header_files
         include/types.h
         include/ui/GameWindow.h
         include/ui/MainWindow.h
+        include/ui/SettingsInputsWindow.h
 	include/Watcher.h
 )
 
 set(ui_files
     src/ui/MainWindow.ui
+    src/ui/SettingsInputsWindow.ui
 )
 
 include_directories(include)

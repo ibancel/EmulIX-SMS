@@ -11,24 +11,30 @@
 Inputs::Inputs() : 
     QObject(nullptr),
 	_debugger{ Debugger::Instance() }, 
-    // TODO(ibancel): singleton
+    _drawSprite{ true },
+    _controller{ },
+    _controllerConnected{ true, false },
     _graphics{ nullptr },
-	_controller{ false },
-	_infoDisplayMode{ 0 },
-	_drawSprite{ true },
-	_isStopRequested{ false }
+    _infoDisplayMode{ 0 },
+    _isStopRequested{ false },
+    _userKeys{ }
 {
-    _userKeys[ControllerKey::CK_UP]    = Qt::Key_Up;
-    _userKeys[ControllerKey::CK_DOWN]  = Qt::Key_Down;
-    _userKeys[ControllerKey::CK_RIGHT] = Qt::Key_Right;
-    _userKeys[ControllerKey::CK_LEFT]  = Qt::Key_Left;
-    _userKeys[ControllerKey::CK_FIREA] = Qt::Key_D;
-    _userKeys[ControllerKey::CK_FIREB] = Qt::Key_F;
+    _userKeys[0][ControllerKey::CK_UP]    = Qt::Key_Up;
+    _userKeys[0][ControllerKey::CK_DOWN]  = Qt::Key_Down;
+    _userKeys[0][ControllerKey::CK_RIGHT] = Qt::Key_Right;
+    _userKeys[0][ControllerKey::CK_LEFT]  = Qt::Key_Left;
+    _userKeys[0][ControllerKey::CK_FIREA] = Qt::Key_D;
+    _userKeys[0][ControllerKey::CK_FIREB] = Qt::Key_F;
 }
 
 void Inputs::aknowledgeStopRequest()
 {
     _isStopRequested = false;
+}
+
+void Inputs::connect(JoypadId idController, bool value)
+{
+    _controllerConnected[idController] = value;
 }
 
 bool Inputs::controllerKeyPressed(JoypadId idController, ControllerKey cKey)
@@ -37,22 +43,9 @@ bool Inputs::controllerKeyPressed(JoypadId idController, ControllerKey cKey)
     return _controller[idController][cKey];
 }
 
-void Inputs::requestStop()
+Qt::Key* Inputs::getControllerKeys(JoypadId idController)
 {
-    _isStopRequested = true;
-}
-
-void Inputs::switchDrawSprite()
-{
-	_drawSprite = !_drawSprite;
-}
-
-void Inputs::switchInfoDisplayMode()
-{
-	_infoDisplayMode++;
-	if (_infoDisplayMode > 1) {
-		_infoDisplayMode = 0;
-	}
+    return _userKeys[idController];
 }
 
 bool Inputs::getDrawSprite()
@@ -65,9 +58,39 @@ int Inputs::getInfoDisplayMode()
 	return _infoDisplayMode;
 }
 
+bool Inputs::isConnected(JoypadId idController)
+{
+    return _controllerConnected[idController];
+}
+
 bool Inputs::isStopRequested()
 {
 	return _isStopRequested;
+}
+
+void Inputs::requestStop()
+{
+    _isStopRequested = true;
+}
+
+void Inputs::setControllerKeys(JoypadId idController, Qt::Key keys[NUMBER_KEYS])
+{
+    for(int i = 0 ; i < NUMBER_KEYS ; i++) {
+        _userKeys[idController][i] = keys[i];
+    }
+}
+
+void Inputs::switchDrawSprite()
+{
+    _drawSprite = !_drawSprite;
+}
+
+void Inputs::switchInfoDisplayMode()
+{
+    _infoDisplayMode++;
+    if (_infoDisplayMode > 1) {
+        _infoDisplayMode = 0;
+    }
 }
 
 // Protected:
@@ -78,11 +101,13 @@ bool Inputs::eventFilter(QObject* obj, QEvent* event)
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
         if(!keyEvent->isAutoRepeat()) {
             int keyPressed = keyEvent->key();
-//            qDebug() << keyEvent->key() << " " << event->type() << " " << keyEvent->isAutoRepeat();
-            for (int i = 0; i < 6; i++) {
-                if (keyPressed == _userKeys[i]) {
-                    _controller[JoypadId::kJoypad1][i] = (event->type() == QEvent::KeyPress);
-                    return true;
+            qDebug() << keyEvent->key() << " " << event->type() << " " << keyEvent->isAutoRepeat();
+            for(int indexController = 0 ; indexController < NUMBER_JOYSTICK ; indexController++) {
+                for (int indexKey = 0; indexKey < 6; indexKey++) {
+                    if (_controllerConnected[indexController] && keyPressed == _userKeys[indexController][indexKey]) {
+                        _controller[indexController][indexKey] = (event->type() == QEvent::KeyPress);
+                        return true;
+                    }
                 }
             }
         }

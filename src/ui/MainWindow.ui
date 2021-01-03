@@ -191,7 +191,7 @@
      <string>Menu</string>
     </property>
     <addaction name="actionPlay"/>
-    <addaction name="actionInput"/>
+    <addaction name="actionSettings"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -228,9 +228,9 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionInput">
+  <action name="actionSettings">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Settings</string>

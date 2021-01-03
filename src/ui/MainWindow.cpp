@@ -18,6 +18,7 @@
 #include "Log.h"
 #include "System.h"
 #include "ui/GameWindow.h"
+#include "ui/SettingsInputsWindow.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -84,6 +85,11 @@ void MainWindow::on_actionQuit_triggered()
     quit();
 }
 
+void MainWindow::on_actionSettings_triggered()
+{
+    std::unique_ptr<SettingsInputsWindow> w = std::make_unique<SettingsInputsWindow>(this);
+    w->exec();
+}
 
 void MainWindow::on_listWidget_gameLibrary_currentRowChanged(int iCurrentRow)
 {
