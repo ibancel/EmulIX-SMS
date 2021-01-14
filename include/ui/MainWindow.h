@@ -2,6 +2,7 @@
 
 #include <thread>
 
+#include <QListWidgetItem>
 #include <QMainWindow>
 #include <QSettings>
 
@@ -33,6 +34,7 @@ private slots:
     void on_actionQuit_triggered();
     void on_actionSettings_triggered();
     void on_listWidget_gameLibrary_currentRowChanged(int currentRow);
+    void on_listWidget_gameLibrary_itemDoubleClicked(QListWidgetItem *item);
     void on_pushButton_browseBios_clicked();
     void on_pushButton_clearLibrary_clicked();
     void on_pushButton_loadFile_clicked();

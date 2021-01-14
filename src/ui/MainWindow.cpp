@@ -98,6 +98,14 @@ void MainWindow::on_listWidget_gameLibrary_currentRowChanged(int iCurrentRow)
     }
 }
 
+void MainWindow::on_listWidget_gameLibrary_itemDoubleClicked(QListWidgetItem *item)
+{
+    if(!_system->getCartridge().ptr()->isLoaded()) {
+        _system->getCartridge().ptr()->insert(item->text().toStdString());
+    }
+    startSystemThread();
+}
+
 void MainWindow::on_pushButton_browseBios_clicked()
 {
     QString biosFolder = _settings.value("gui/biosFolder", "").toString();

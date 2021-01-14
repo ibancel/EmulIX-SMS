@@ -1,63 +1,79 @@
 #include "ui/SettingsInputsWindow.h"
 #include "ui_SettingsInputsWindow.h"
 
+#include <cmath>
+
 #include <QDialog>
 #include <QtGamepad/QGamepad>
+#include <QtGamepad/QGamepadManager>
 #include <QMessageBox>
+#include <QThread>
 #include <QTimer>
 
 #include "Inputs.h"
 
 SettingsInputsWindow::SettingsInputsWindow(QWidget *parent)
     : QDialog{parent},
-      _controllerKeys{ },
+      _axisNeedReset{ },
+      _userKeys{ },
       ui(new Ui::SettingsInputsWindow)
 {
     ui->setupUi(this);
     setWindowTitle("Input Settings");
+    ui->progressBar_capture->setVisible(false);
+    ui->label_capture->setVisible(false);
+
+    ui->progressBar_capture->setMaximum(CaptureTimeout);
 
     connect(this, &QDialog::accepted, [&](){
         if(ui->comboBox_Player1->currentIndex() > 0) {
-            Inputs::Instance()->setControllerKeys(Inputs::kJoypad1, _controllerKeys[Inputs::kJoypad1]);
+            Inputs::Instance()->setUserKeys(Inputs::kJoypad1, _userKeys[Inputs::kJoypad1]);
         } else {
-            Qt::Key emptyKeys[]{Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown};
-            Inputs::Instance()->setControllerKeys(Inputs::kJoypad1, emptyKeys);
+            InputData emptyKeys[Inputs::NUMBER_KEYS]{ };
+            Inputs::Instance()->setUserKeys(Inputs::kJoypad1, emptyKeys);
         }
 
         if(ui->comboBox_Player2->currentIndex() > 0) {
-            Inputs::Instance()->setControllerKeys(Inputs::kJoypad2, _controllerKeys[Inputs::kJoypad2]);
+            Inputs::Instance()->setUserKeys(Inputs::kJoypad2, _userKeys[Inputs::kJoypad2]);
         } else {
-            Qt::Key emptyKeys[]{Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown, Qt::Key_unknown};
-            Inputs::Instance()->setControllerKeys(Inputs::kJoypad2, emptyKeys);
+            InputData emptyKeys[Inputs::NUMBER_KEYS]{ };
+            Inputs::Instance()->setUserKeys(Inputs::kJoypad2, emptyKeys);
         }
     });
+
+    auto gamepads = QGamepadManager::instance()->connectedGamepads();
+    for(int i = 0 ; i < gamepads.size() ; i++) {
+        QGamepad* aGamepad = new QGamepad(gamepads[i], this);
+        ui->comboBox_Player1->addItem(aGamepad->name(), QVariant(gamepads[i]));
+        ui->comboBox_Player2->addItem(aGamepad->name(), QVariant(gamepads[i]));
+    }
 
     loadInputsGui();
 
     {
         // Actual values player 1
         ui->comboBox_Player1->setCurrentIndex(Inputs::Instance()->isConnected(Inputs::kJoypad1) ? 1 : 0);
-        Qt::Key* keys = Inputs::Instance()->getControllerKeys(Inputs::kJoypad1);
-        ui->pushButton_Up_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_UP]));
-        ui->pushButton_Left_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_LEFT]));
-        ui->pushButton_Down_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_DOWN]));
-        ui->pushButton_Right_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_RIGHT]));
-        ui->pushButton_A_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_FIREA]));
-        ui->pushButton_B_Player1->setText(keyToQstring(keys[Inputs::ControllerKey::CK_FIREB]));
-        memcpy(&(_controllerKeys[Inputs::kJoypad1]), keys, Inputs::NUMBER_KEYS*sizeof(Qt::Key));
+        InputData* keys = Inputs::Instance()->getUserKeys(Inputs::kJoypad1);
+        ui->pushButton_Up_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_UP]));
+        ui->pushButton_Left_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_LEFT]));
+        ui->pushButton_Down_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_DOWN]));
+        ui->pushButton_Right_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_RIGHT]));
+        ui->pushButton_A_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_FIREA]));
+        ui->pushButton_B_Player1->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_FIREB]));
+        memcpy(&(_userKeys[Inputs::kJoypad1]), keys, Inputs::NUMBER_KEYS*sizeof(InputData));
     }
 
     {
         // Actual values player 2
         ui->comboBox_Player2->setCurrentIndex(Inputs::Instance()->isConnected(Inputs::kJoypad2) ? 1 : 0);
-        Qt::Key* keys = Inputs::Instance()->getControllerKeys(Inputs::kJoypad2);
-        ui->pushButton_Up_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_UP]));
-        ui->pushButton_Left_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_LEFT]));
-        ui->pushButton_Down_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_DOWN]));
-        ui->pushButton_Right_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_RIGHT]));
-        ui->pushButton_A_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_FIREA]));
-        ui->pushButton_B_Player2->setText(keyToQstring(keys[Inputs::ControllerKey::CK_FIREB]));
-        memcpy(&(_controllerKeys[Inputs::kJoypad2]), keys, Inputs::NUMBER_KEYS*sizeof(Qt::Key));
+        InputData* keys = Inputs::Instance()->getUserKeys(Inputs::kJoypad2);
+        ui->pushButton_Up_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_UP]));
+        ui->pushButton_Left_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_LEFT]));
+        ui->pushButton_Down_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_DOWN]));
+        ui->pushButton_Right_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_RIGHT]));
+        ui->pushButton_A_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_FIREA]));
+        ui->pushButton_B_Player2->setText(keyDataToQString(keys[Inputs::ControllerKey::CK_FIREB]));
+        memcpy(&(_userKeys[Inputs::kJoypad2]), keys, Inputs::NUMBER_KEYS*sizeof(InputData));
     }
 }
 
@@ -96,7 +112,7 @@ bool SettingsInputsWindow::eventFilter(QObject* obj, QEvent* event)
 
 // Private:
 
-void SettingsInputsWindow::captureKey(Inputs::JoypadId idController, Inputs::ControllerKey idKey, QPushButton* iPushButton)
+void SettingsInputsWindow::captureKey(Inputs::JoypadId idController, Inputs::ControllerKey iKey, QPushButton* iPushButton)
 {
     QList<QWidget*> focusChain;
     focusChain.push_back(nextInFocusChain());
@@ -108,41 +124,229 @@ void SettingsInputsWindow::captureKey(Inputs::JoypadId idController, Inputs::Con
     }
 
     QPushButton* currentPushButton = iPushButton;
-    QPushButton* nextPushButton = nullptr;
 
-    setEnabled(false);
+    setEnabledCaptureMode(true);
+    ui->progressBar_capture->setVisible(true);
+    ui->label_capture->setVisible(true);
 
-    do {
+    do
+    {
+        ui->progressBar_capture->setValue(CaptureTimeout);
+        ui->label_capture->setText(QString::fromStdString(Inputs::keyToString(iKey)));
+
+        QList<QMetaObject::Connection> disconnectList;
+        bool captureHandled = false;
+
         QTimer timer;
         timer.setSingleShot(true);
         QEventLoop loop;
-        connect( &timer, &QTimer::timeout, &loop, &QEventLoop::quit );
-        connect(this, &SettingsInputsWindow::signal_captureTerminated, [&](Qt::Key key){
-            currentPushButton->setText(keyToQstring(key));
-            _controllerKeys[idController][idKey] = key;
-            if(key != Qt::Key_unknown && key != 0 && idKey < Inputs::NUMBER_KEYS-1) {
-                nextPushButton = getNextButton(idController, idKey, currentPushButton);
-            } else{
-                nextPushButton = nullptr;
+        QThread* threadTimer = QThread::create([this, &timer, &loop]() {
+            timer.start(CaptureTimeout);
+            while(!loop.isRunning()) { }
+            while(loop.isRunning() && timer.remainingTime() > 0) {
+                emit(signal_updateProgressBar(timer.remainingTime()));
+                update();
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                QCoreApplication::processEvents();
             }
-            loop.exit();
+            timer.stop();
         });
+        timer.moveToThread(threadTimer);
+        disconnectList.push_back(connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit, Qt::DirectConnection));
+        disconnectList.push_back(connect(this, &SettingsInputsWindow::signal_updateProgressBar, this, &SettingsInputsWindow::slot_updateProgressBar));
+
+        if((idController == Inputs::kJoypad1 && ui->comboBox_Player1->currentIndex() == 1)
+            || (idController == Inputs::kJoypad2 && ui->comboBox_Player2->currentIndex() == 1))
+        {
+            disconnectList.push_back(connect(this, &SettingsInputsWindow::signal_captureTerminated, this, [&](Qt::Key key){
+                _userKeys[idController][iKey].type = ControllerType::kTypeKeyboard;
+                _userKeys[idController][iKey].data = key;
+                if(key != Qt::Key_unknown && key != 0) {
+                    captureHandled = true;
+                }
+                loop.exit();
+            }));
+        } else {
+            disconnectList.push_back(connect(this, &SettingsInputsWindow::signal_captureTerminated, [&](Qt::Key key){
+                if(key == Qt::Key_unknown || key == 0) {
+                    loop.exit();
+                }
+            }));
+            std::shared_ptr<QGamepad> aGamepad;
+            if(idController == Inputs::kJoypad1) {
+                aGamepad = std::make_shared<QGamepad>(ui->comboBox_Player1->currentData().toInt(), this);
+            } else if(idController == Inputs::kJoypad2) {
+                aGamepad = std::make_shared<QGamepad>(ui->comboBox_Player2->currentData().toInt(), this);
+            }
+            if(!aGamepad) {
+                throw std::domain_error("No defined QGamepad for this player controller");
+            }
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::axisLeftXChanged, this, [&, aGamepad](double value){
+                if(!_axisNeedReset[1] && abs(value) > Inputs::JOYSTICK_TRESHOLD) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = value>0 ? JoystickKeys::kThumbLeftRight : JoystickKeys::kThumbLeftLeft;
+                    _userKeys[idController][iKey].joystickId = aGamepad->deviceId();
+                    _axisNeedReset[1] = true;
+                    captureHandled = true;
+                    loop.exit();
+                } else if(_axisNeedReset[1] && abs(value) <= Inputs::JOYSTICK_TRESHOLD*0.5) {
+                    _axisNeedReset[1] = false;
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::axisLeftYChanged, this, [&, aGamepad](double value){
+                if(!_axisNeedReset[0] && abs(value) > Inputs::JOYSTICK_TRESHOLD) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = value<0 ? JoystickKeys::kThumbLeftUp : JoystickKeys::kThumbLeftDown;
+                    _userKeys[idController][iKey].joystickId = aGamepad->deviceId();
+                    _axisNeedReset[0] = true;
+                    captureHandled = true;
+                    loop.exit();
+                } else if(_axisNeedReset[0] && abs(value) <= Inputs::JOYSTICK_TRESHOLD*0.5) {
+                    _axisNeedReset[0] = false;
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::axisRightXChanged, this, [&, aGamepad](double value){
+                if(!_axisNeedReset[3] && abs(value) > Inputs::JOYSTICK_TRESHOLD) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = value>0 ? JoystickKeys::kThumbRightRight : JoystickKeys::kThumbRightLeft;
+                    _userKeys[idController][iKey].joystickId = aGamepad->deviceId();
+                    _axisNeedReset[3] = true;
+                    captureHandled = true;
+                    loop.exit();
+                } else if(_axisNeedReset[3] && abs(value) <= Inputs::JOYSTICK_TRESHOLD*0.5) {
+                    _axisNeedReset[3] = false;
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::axisRightYChanged, this, [&, aGamepad](double value){
+                if(!_axisNeedReset[2] && abs(value) > Inputs::JOYSTICK_TRESHOLD) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = value<0 ? JoystickKeys::kThumbRightUp : JoystickKeys::kThumbRightDown;
+                    _userKeys[idController][iKey].joystickId = aGamepad->deviceId();
+                    _axisNeedReset[2] = true;
+                    captureHandled = true;
+                    loop.exit();
+                } else if(_axisNeedReset[2] && abs(value) <= Inputs::JOYSTICK_TRESHOLD*0.5) {
+                    _axisNeedReset[2] = false;
+                }
+            }));
+
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonUpChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kDpadUp;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonLeftChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kDpadLeft;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonDownChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kDpadDown;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonRightChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kDpadRight;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonAChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kButtonA;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonBChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kButtonB;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonXChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kButtonX;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+            disconnectList.push_back(connect(aGamepad.get(), &QGamepad::buttonYChanged, this, [&, aGamepad](bool pressed){
+                if(pressed) {
+                    _userKeys[idController][iKey].type = ControllerType::kTypeJoystick;
+                    _userKeys[idController][iKey].data = JoystickKeys::kButtonY;
+                    captureHandled = true;
+                    loop.exit();
+                }
+            }));
+        }
 
         QString styleSheet = currentPushButton->styleSheet();
         currentPushButton->setStyleSheet("color:red;");
         installEventFilter(this);
-        timer.start(5000);
+        threadTimer->start();
         loop.exec();
         removeEventFilter(this);
         currentPushButton->setStyleSheet(styleSheet);
-        currentPushButton = nextPushButton;
-        idKey = static_cast<Inputs::ControllerKey>(idKey+1);
+        threadTimer->wait();
+
+        if(captureHandled) {
+            currentPushButton->setText(keyDataToQString(_userKeys[idController][iKey]));
+        }
+
+        auto [hasNextKey, nextKey] = findNextKey(iKey);
+        if(captureHandled && hasNextKey) {
+            currentPushButton = getNextButton(iKey, currentPushButton);
+            iKey = nextKey;
+        } else {
+            currentPushButton = nullptr;
+        }
+
+        for(auto disconnectElement : disconnectList) {
+            disconnect(disconnectElement);
+        }
+
     } while(currentPushButton);
 
-    setEnabled(true);
+    ui->progressBar_capture->setVisible(false);
+    ui->label_capture->setVisible(false);
+    setEnabledCaptureMode(false);
 }
 
-QPushButton* SettingsInputsWindow::getNextButton(Inputs::JoypadId idController, Inputs::ControllerKey key, QPushButton* iPushButton)
+std::tuple<bool, Inputs::ControllerKey> SettingsInputsWindow::findNextKey(Inputs::ControllerKey iKey)
+{
+    int indexKey = -1;
+    for(int i = 0 ; i < Inputs::NUMBER_KEYS-1 && indexKey == -1 ; i++) {
+        if(SettingsInputsWindow::KeysOrder[i] == iKey) {
+            indexKey = i;
+        }
+    }
+
+    if(indexKey == -1) {
+        return {false, Inputs::CK_DOWN};
+    }
+
+    return {true, SettingsInputsWindow::KeysOrder[indexKey+1]};
+}
+
+
+QPushButton* SettingsInputsWindow::getNextButton(Inputs::ControllerKey key, QPushButton* iPushButton)
 {
     if(key >= Inputs::NUMBER_KEYS) {
         return nullptr;
@@ -155,6 +359,83 @@ QPushButton* SettingsInputsWindow::getNextButton(Inputs::JoypadId idController, 
     return nextPushButton;
 }
 
+QString SettingsInputsWindow::keyDataToQString(const InputData& iKeyData)
+{
+    switch(iKeyData.type) {
+        case ControllerType::kTypeKeyboard:
+            return keyQtToQString(std::get<Qt::Key>(iKeyData.data));
+            break;
+        case ControllerType::kTypeJoystick:
+            return QString::fromStdString(keyJoystickToString(std::get<JoystickKeys>(iKeyData.data)));
+            break;
+        default:
+            return QString("None");
+            break;
+    }
+}
+
+std::string SettingsInputsWindow::keyDataToString(const InputData& iKeyData)
+{
+    return keyDataToQString(iKeyData).toStdString();
+}
+
+std::string SettingsInputsWindow::keyJoystickToString(JoystickKeys iKeyJoystick)
+{
+    switch(iKeyJoystick) {
+        case JoystickKeys::kButtonA:
+            return "Button A";
+            break;
+        case JoystickKeys::kButtonB:
+            return "Button B";
+            break;
+        case JoystickKeys::kButtonX:
+            return "Button X";
+            break;
+        case JoystickKeys::kButtonY:
+            return "Button Y";
+            break;
+        case JoystickKeys::kDpadDown:
+            return "DPad Down";
+            break;
+        case JoystickKeys::kDpadLeft:
+            return "DPad Left";
+            break;
+        case JoystickKeys::kDpadRight:
+            return "DPad Right";
+            break;
+        case JoystickKeys::kDpadUp:
+            return "DPad Up";
+            break;
+        case JoystickKeys::kThumbLeftUp:
+            return "Left Y+";
+            break;
+        case JoystickKeys::kThumbLeftLeft:
+            return "Left X-";
+            break;
+        case JoystickKeys::kThumbLeftDown:
+            return "Left Y-";
+            break;
+        case JoystickKeys::kThumbLeftRight:
+            return "Left X+";
+            break;
+        case JoystickKeys::kThumbRightUp:
+            return "Right Y+";
+            break;
+        case JoystickKeys::kThumbRightLeft:
+            return "Right X-";
+            break;
+        case JoystickKeys::kThumbRightDown:
+            return "Right Y-";
+            break;
+        case JoystickKeys::kThumbRightRight:
+            return "Right X+";
+            break;
+        default:
+            return "None";
+            break;
+    }
+}
+
 void SettingsInputsWindow::keyPressEvent(QKeyEvent *e) {
     if(e->key() != Qt::Key_Escape) {
         QDialog::keyPressEvent(e);
@@ -163,7 +444,7 @@ void SettingsInputsWindow::keyPressEvent(QKeyEvent *e) {
     }
 }
 
-QString SettingsInputsWindow::keyToQstring(Qt::Key iKey)
+QString SettingsInputsWindow::keyQtToQString(Qt::Key iKey)
 {
     if(iKey == Qt::Key_unknown || iKey == 0) {
         return "None";
@@ -171,12 +452,6 @@ QString SettingsInputsWindow::keyToQstring(Qt::Key iKey)
 
 
     return QKeySequence(iKey).toString();
-}
-
-
-std::string SettingsInputsWindow::keyToString(Qt::Key iKey)
-{
-    return keyToQstring(iKey).toStdString();
 }
 
 void SettingsInputsWindow::loadInputsGui()
@@ -212,6 +487,25 @@ void SettingsInputsWindow::loadInputsGui()
         ui->pushButton_A_Player2->setEnabled(false);
         ui->pushButton_B_Player2->setEnabled(false);
     }
+}
+
+void SettingsInputsWindow::printUserKeys()
+{
+    for(int indexJoystick = 0 ; indexJoystick< Inputs::NUMBER_JOYPAD ; indexJoystick++) {
+        std::cout << Inputs::Instance()->isConnected(static_cast<Inputs::JoypadId>(indexJoystick)) << ": ";
+        for(int indexKey = 0 ; indexKey < Inputs::NUMBER_KEYS ; indexKey++) {
+            std::cout << keyDataToString(_userKeys[indexJoystick][indexKey]) << " | ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void SettingsInputsWindow::setEnabledCaptureMode(bool inCapture)
+{
+    ui->groupBox_player1->setEnabled(!inCapture);
+    ui->groupBox_player2->setEnabled(!inCapture);
+    ui->layout_captureInfos->setEnabled(inCapture);
+    ui->buttonBox->setEnabled(!inCapture);
 }
 
 // Slots:
@@ -286,4 +580,9 @@ void SettingsInputsWindow::on_pushButton_B_Player1_clicked()
 void SettingsInputsWindow::on_pushButton_B_Player2_clicked()
 {
     captureKey(Inputs::kJoypad2, Inputs::CK_FIREB, ui->pushButton_B_Player2);
+}
+
+void SettingsInputsWindow::slot_updateProgressBar(int value)
+{
+    ui->progressBar_capture->setValue(value);
 }
