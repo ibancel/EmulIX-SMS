@@ -6,7 +6,7 @@
 
 #define DEBUG_MODE false || _DEBUG
 
-#define BREAKPOINT_STYLE 1 // 0 for before execution, 1 for after
+#define BREAKPOINT_STYLE 0 // 0 for before execution, 1 for after
 
 #define TIME_SCALE 1.00
 

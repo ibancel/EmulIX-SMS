@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cmath>
 
 #include "Audio.h"
@@ -15,7 +16,7 @@ Audio::Audio()
 		_registerTone[i] = 0;
 		_output[i] = 1;
 		_counter[i] = 0;
-        _sound[i].setLoop(true);
+//        _sound[i].setLoop(true);
 	}
 
 	_registerLatch = 0;
@@ -59,13 +60,15 @@ u8 Audio::write(u8 port, u8 data)
 
 void Audio::run()
 {
-    sf::Time elapsedTime = _clockTime.restart();
+    std::chrono::duration<float, std::ratio<1,1>> intervalLoop;
+    intervalLoop = std::chrono::steady_clock::now() - _clockTime;
+    _clockTime = std::chrono::steady_clock::now();
 
 	for(int i = 0 ; i < 1 ; i++)
 	{
 		continue;
         if(_counter[i] > 0)
-            _counter[i] -= elapsedTime.asSeconds() * _inputClock;
+            _counter[i] -= intervalLoop.count() * _inputClock;
 
 		// no else for manage it directly at 0
 		if(_counter[i] <= 0)
@@ -102,7 +105,7 @@ void Audio::playSound(u8 indice)
 {
    if(!soundActive) return;
 
-	sf::Int16 raw[44100];
+    s16 raw[44100];
 	const double TWO_PI = 6.28318;
 	double x = 0;
 	double note = ((double)_inputClock/(32*_registerTone[0]));
@@ -123,11 +126,11 @@ void Audio::playSound(u8 indice)
 	}
 
 	//cout << hex << (u16)indice << " - " << (u16)_registerVol[indice] << " - " << (u16)_registerTone[indice] << endl;
-    if (!_buffer[indice].loadFromSamples(raw, 44100, 1, 44100)) {
-        std::cerr << "Loading failed!" << std::endl;
-    }
+//    if (!_buffer[indice].loadFromSamples(raw, 44100, 1, 44100)) {
+//        std::cerr << "Loading failed!" << std::endl;
+//    }
 
-    _sound[indice].stop();
-    _sound[indice].setBuffer(_buffer[indice]);
-    _sound[indice].play();
+//    _sound[indice].stop();
+//    _sound[indice].setBuffer(_buffer[indice]);
+//    _sound[indice].play();
 }

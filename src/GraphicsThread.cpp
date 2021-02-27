@@ -333,6 +333,7 @@ void GraphicsThread::setCram(u16 iAddress, u8 iNewValue)
 void GraphicsThread::setGraphicMode(u8 iNewMode)
 {
 	std::scoped_lock lock{ _mutexData };
+    std::cout << static_cast<int>(iNewMode) << std::endl;
 	_graphicMode = iNewMode;
 }
 
@@ -367,44 +368,44 @@ void GraphicsThread::setGameWindow(GameWindow *iWindow)
 
 // ** PRIVATE **
 
-u8* const GraphicsThread::getNameTable(u16 memoryOffset)
+u8* GraphicsThread::getNameTable(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getNameTableAddress()) + static_cast<uintptr_t>(memoryOffset);
 }
 
-u8* const GraphicsThread::getColorTable(u8 memoryOffset)
+u8* GraphicsThread::getColorTable(u8 memoryOffset)
 {
 	return _cram + static_cast<uintptr_t>(memoryOffset);
 }
 
-u8* const GraphicsThread::getColorTableMode2(u16 memoryOffset)
+u8* GraphicsThread::getColorTableMode2(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getColorTableAddressMode2()) + static_cast<uintptr_t>(memoryOffset);
 }
 
 // PATTERN GENERATOR TABLE
-u8* const GraphicsThread::getPatternGenerator(u16 memoryOffset)
+u8* GraphicsThread::getPatternGenerator(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getPatternGeneratorAddress()) + static_cast<uintptr_t>(memoryOffset);
 }
 
-u8* const GraphicsThread::getPatternGeneratorMode2(u16 memoryOffset)
+u8* GraphicsThread::getPatternGeneratorMode2(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getPatternGeneratorAddressMode2()) + static_cast<uintptr_t>(memoryOffset);
 }
 
-u8* const GraphicsThread::getPatternGeneratorMode4(u16 memoryOffset)
+u8* GraphicsThread::getPatternGeneratorMode4(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getPatternGeneratorAddressMode4()) + static_cast<uintptr_t>(memoryOffset);
 }
 
 //SPRITE ATTRIBUTE TABLE
-u8* const GraphicsThread::getSpriteAttributeTable(u8 memoryOffset)
+u8* GraphicsThread::getSpriteAttributeTable(u8 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getSpriteAttributeTableAddress()) + static_cast<uintptr_t>(memoryOffset);
 }
 
-u8* const GraphicsThread::getSpritePatternTable(u16 memoryOffset)
+u8* GraphicsThread::getSpritePatternTable(u16 memoryOffset)
 {
 	return _vram + static_cast<uintptr_t>(getSpritePatternTableAddress()) + static_cast<uintptr_t>(memoryOffset);
 }
@@ -471,8 +472,8 @@ void GraphicsThread::drawLine(int line)
 			{
 				const u8 horizontalScroll = getRegister(8);
 				const bool allowHScroll = !getBit8(getRegister(0), 6) || (x > 15);
-				const u8 hTileScroll = allowHScroll ? (horizontalScroll >> 3) : 0;
-				const u8 hFineScroll = allowHScroll ? (horizontalScroll & 0b0000'0111) : 0;
+                const u8 hTileScroll = allowHScroll ? (horizontalScroll >> 3) : 0;
+                const u8 hFineScroll = allowHScroll ? (horizontalScroll & 0b0000'0111) : 0;
 
 				if (allowHScroll && getBit8(getRegister(0), 5) && x < 8) {
 //					_drawImage.setPixel(x, y, byteToSfmlColor(getColorTable(VDP::ColorBank::kFirst)[getBackdropColor()], true));
@@ -488,7 +489,7 @@ void GraphicsThread::drawLine(int line)
 					wordName >>= 1;
 					uint_fast8_t flipV = wordName & 1;
 					wordName >>= 1;
-					uint_fast8_t paletteSelect = wordName & 1;
+                    uint_fast8_t paletteSelect = wordName & 1;
 					wordName >>= 1;
 					uint_fast8_t priority = wordName & 1;
 
@@ -498,10 +499,10 @@ void GraphicsThread::drawLine(int line)
 					u8 rowPatternIndexFlipped = rowPatternIndex;
 
 					if (flipH) {
-						columnPatternIndexFlipped = 7 - columnPatternIndex;
+                        columnPatternIndexFlipped = 7 - columnPatternIndex;
 					}
 					if (flipV) {
-						rowPatternIndexFlipped = ((1 * 8) - 1) * 4 - rowPatternIndex;
+                        rowPatternIndexFlipped = ((1 * 8) - 1) * 4 - rowPatternIndex;
 					}
 					u8 selectedColor = getBit8(pattern[rowPatternIndexFlipped], columnPatternIndexFlipped);
 					selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 1], columnPatternIndexFlipped) << 1;

@@ -123,48 +123,48 @@ private:
 		// TODO: different for other resolutions
 		return (_register[2] & 0x0E) << 10;
 	}
-	u8* const getNameTable(u16 memoryOffset = 0);
+    u8* getNameTable(u16 memoryOffset = 0);
 
 	// COLOR TABLE
 	inline u16 getColorTableAddress() {
 		return _register[3] << 6;
 	}
-	u8* const getColorTable(u8 memoryOffset = 0);
+    u8* getColorTable(u8 memoryOffset = 0);
 
 	inline u16 getColorTableAddressMode2() {
 		return (_register[3] & 0b1000'0000) << 6;
 	}
-	u8* const getColorTableMode2(u16 memoryOffset = 0);
+    u8* getColorTableMode2(u16 memoryOffset = 0);
 
 	// PATTERN GENERATOR TABLE
 	inline u16 getPatternGeneratorAddress() {
 		return (_register[4] & 0b111) * 0x800;
 	}
-	u8* const getPatternGenerator(u16 memoryOffset = 0);
+    u8* getPatternGenerator(u16 memoryOffset = 0);
 
 	inline u16 getPatternGeneratorAddressMode2() {
 		return (_register[4] & 0b100) * 0x800;
 	}
-	u8* const getPatternGeneratorMode2(u16 memoryOffset = 0);
+    u8* getPatternGeneratorMode2(u16 memoryOffset = 0);
 
 	inline u16 getPatternGeneratorAddressMode4() {
 		return 0;
 	}
-	u8* const getPatternGeneratorMode4(u16 memoryOffset = 0);
+    u8* getPatternGeneratorMode4(u16 memoryOffset = 0);
 
 	// SPRITE ATTRIBUTE TABLE
 	inline u16 getSpriteAttributeTableAddress() {
 		//return (_register[5] & 0b1111111) * 0x80;
 		return (_register[5] & 0x7E) << 7;
 	}
-	u8* const getSpriteAttributeTable(u8 memoryOffset = 0);
+    u8* getSpriteAttributeTable(u8 memoryOffset = 0);
 
 	// SPRITE PATTERN TABLE
 	// Also called Sprite Generator Table
 	inline u16 getSpritePatternTableAddress() {
 		return (_register[6] & 0b100) << 11;
 	}
-	u8* const getSpritePatternTable(u16 memoryOffset = 0);
+    u8* getSpritePatternTable(u16 memoryOffset = 0);
 
 
 

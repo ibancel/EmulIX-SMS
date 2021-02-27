@@ -34,7 +34,7 @@ class Inputs : public QObject, public Singleton<Inputs>
 {
     Q_OBJECT
 public:
-    static constexpr double JOYSTICK_TRESHOLD = 0.5;
+    static constexpr double JOYSTICK_TRESHOLD = 0.4;
     static constexpr int NUMBER_JOYPAD = 2;
     static constexpr int NUMBER_KEYS = 6;
     enum JoypadId : size_t { kJoypad1 = 0, kJoypad2 = 1 };

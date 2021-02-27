@@ -80,7 +80,6 @@ set(ui_files
 
 include_directories(include)
 
-find_package(SFML 2.5.1 REQUIRED COMPONENTS system audio)
 find_package(OpenGL COMPONENTS OpenGL)
 
 find_package(Qt5 COMPONENTS Core Widgets Gamepad REQUIRED)
@@ -94,7 +93,7 @@ add_executable(${project_name} ${source_files} ${header_files} ${ui_files} ${qrc
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR})
 
-target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Gamepad Qt5::Widgets pthread sfml-system sfml-audio)
+target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Gamepad Qt5::Widgets pthread)
 
 # Visual Studio purpose
 set_target_properties(${project_name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")

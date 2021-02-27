@@ -1,5 +1,7 @@
 #include "Inputs.h"
 
+#include <set>
+
 #include <QEvent>
 #include <QGamepad>
 #include <QKeyEvent>

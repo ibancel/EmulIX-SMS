@@ -491,7 +491,6 @@ int CPU::opcode0(u8 x, u8 y, u8 z, u8 p, u8 q)
 			nbTStates = 7;
 		}
 	}
-	//
 	else if(x == 0 && z == 1 && q == 0) // LD rp[p],nn
 	{
 		u16 val = _memory->read(_pc++);
@@ -524,7 +523,6 @@ int CPU::opcode0(u8 x, u8 y, u8 z, u8 p, u8 q)
 			nbTStates = 11;
 		}
 	}
-	//
 	else if(x == 0 && z == 2 && q == 0 && p == 0) // LD (BC),A
 	{
 		_memory->write(getRegisterPair(RP_BC), _register[R_A]);
