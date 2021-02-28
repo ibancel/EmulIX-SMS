@@ -1,0 +1,19 @@
+﻿---
+BasedOnStyle: WebKit
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: BeforeColon
+BraceWrapping:
+    AfterClass: true
+    AfterFunction: true
+ColumnLimit: '120'
+ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
+IndentCaseLabels: 'true'
+IndentWidth: '4'
+Language: Cpp
+NamespaceIndentation: None
+SpaceBeforeParens: Never
+SpacesInSquareBrackets: 'false'
+TabWidth: '4'
+UseTab: ForContinuationAndIndentation
+
+...

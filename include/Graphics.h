@@ -3,8 +3,8 @@
 #include <chrono>
 
 #include "GraphicsThread.h"
-#include "Memory.h"
 #include "Log.h"
+#include "Memory.h"
 #include "Stats.h"
 #include "System.h"
 #include "types.h"
@@ -15,12 +15,12 @@ class System;
 class Graphics
 {
 public:
-	//static constexpr long double PixelFrequency = 5'376'240.0 * TIME_SCALE; // NTSC
-	//static constexpr double PixelFrequency = 5'352'300.0 * TIME_SCALE; // PAL
+	// static constexpr long double PixelFrequency = 5'376'240.0 * TIME_SCALE; // NTSC
+	// static constexpr double PixelFrequency = 5'352'300.0 * TIME_SCALE; // PAL
 	static constexpr long double PixelFrequency = BaseFrequency / 2.0;
 	static float RatioSize;
 
-    Graphics(System& parent);
+	Graphics(System& parent);
 
 	void reset();
 
@@ -33,19 +33,15 @@ public:
 
 	u8 controlAction();
 
-    void setGameWindow(GameWindow* iWindow);
+	void setGameWindow(GameWindow* iWindow);
 
 	void dumpVram();
 
 	u8 getGraphicMode();
 
-	bool getIE() {
-		return _graphicsThread.getIE();
-	}
+	bool getIE() { return _graphicsThread.getIE(); }
 
-	inline void addCpuStates(int iNumberStates) {
-		_graphicsThread.addCpuStates(iNumberStates);
-	}
+	inline void addCpuStates(int iNumberStates) { _graphicsThread.addCpuStates(iNumberStates); }
 
 #if !GRAPHIC_THREADING
 	void drawGame();
@@ -53,7 +49,7 @@ public:
 #endif
 
 protected:
-    PtrRef<Memory> _memory;
+	PtrRef<Memory> _memory;
 
 	GraphicsThread _graphicsThread;
 
@@ -71,9 +67,10 @@ protected:
 
 	void updateGraphicMode();
 
-	inline void incrementVramAddress() {
+	inline void incrementVramAddress()
+	{
 		_addressVRAM++;
-		if (_addressVRAM >= 0x4000) {
+		if(_addressVRAM >= 0x4000) {
 			_addressVRAM = 0;
 		}
 	}

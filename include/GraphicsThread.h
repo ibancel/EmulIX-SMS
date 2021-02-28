@@ -19,9 +19,9 @@ public:
 	GraphicsThread();
 	~GraphicsThread();
 
-    static PixelColor nibbleToPixelColor(std::uint_fast8_t nibble);
-    static PixelColor byteToPixelColor(uint_fast8_t iByte, bool useTransparency = false);
-	
+	static PixelColor nibbleToPixelColor(std::uint_fast8_t nibble);
+	static PixelColor byteToPixelColor(uint_fast8_t iByte, bool useTransparency = false);
+
 	// Thread control
 	void close(bool iWaitJoin);
 	void reset();
@@ -48,21 +48,21 @@ public:
 	void setStatusRegister(u8 iNewValue);
 	void setStatusRegisterBit(u8 position, bool newBit);
 	void setVram(u16 iAddress, u8 iNewValue);
-    void setGameWindow(GameWindow* iWindow);
+	void setGameWindow(GameWindow* iWindow);
 
+	bool isSynchronized() { return _isSynchronized; }
 
-	bool isSynchronized() {
-		return _isSynchronized;
-	}
-
-	void addCpuStates(int iNumberStates) {
-		std::scoped_lock lock{ _mutexData };
+	void addCpuStates(int iNumberStates)
+	{
+		std::scoped_lock lock { _mutexData };
 		_cpuStatesExecuted += iNumberStates;
 		setIsSynchronized(false);
 	}
 
-	bool getIE() {
-		bool frameInterrupt = static_cast<bool>(getStatusRegisterBit(VDP::S_F)) && static_cast<bool>(getBit8(_register[1], 5));
+	bool getIE()
+	{
+		bool frameInterrupt
+			= static_cast<bool>(getStatusRegisterBit(VDP::S_F)) && static_cast<bool>(getBit8(_register[1], 5));
 		bool lineInterrupt = _lineInterruptFlag && static_cast<bool>(getBit8(_register[0], 4));
 		return frameInterrupt || lineInterrupt;
 	}
@@ -72,7 +72,7 @@ private:
 	std::thread _threadInfo;
 	bool _isRunning;
 
-    GameWindow* _gameWindow;
+	GameWindow* _gameWindow;
 
 	u8 _graphicMode;
 	u8 _register[GRAPHIC_REGISTER_SIZE];
@@ -81,7 +81,7 @@ private:
 	u8 _vram[GRAPHIC_VRAM_SIZE];
 	u8 _cram[GRAPHIC_CRAM_SIZE];
 
-    Frame _frame;
+	Frame _frame;
 
 	long double _cpuStatesExecuted;
 
@@ -108,79 +108,62 @@ private:
 	void drawLine(int line);
 	void drawPatterns();
 	void drawPalettes();
-    void getFrame() { /* TODO */ }
+	void getFrame()
+	{ /* TODO */
+	}
 	void runThreadGame();
 	void runThreadInfo();
 
-	void setIsSynchronized(bool iState) {
-		std::lock_guard<std::mutex> aLock{ this->mutexSync };
+	void setIsSynchronized(bool iState)
+	{
+		std::lock_guard<std::mutex> aLock { this->mutexSync };
 		_isSynchronized = iState;
 		this->conditionSync.notify_all();
 	}
 
 	// NAME TABLE
-	inline u16 getNameTableAddress() {
+	inline u16 getNameTableAddress()
+	{
 		// TODO: different for other resolutions
 		return (_register[2] & 0x0E) << 10;
 	}
-    u8* getNameTable(u16 memoryOffset = 0);
+	u8* getNameTable(u16 memoryOffset = 0);
 
 	// COLOR TABLE
-	inline u16 getColorTableAddress() {
-		return _register[3] << 6;
-	}
-    u8* getColorTable(u8 memoryOffset = 0);
+	inline u16 getColorTableAddress() { return _register[3] << 6; }
+	u8* getColorTable(u8 memoryOffset = 0);
 
-	inline u16 getColorTableAddressMode2() {
-		return (_register[3] & 0b1000'0000) << 6;
-	}
-    u8* getColorTableMode2(u16 memoryOffset = 0);
+	inline u16 getColorTableAddressMode2() { return (_register[3] & 0b1000'0000) << 6; }
+	u8* getColorTableMode2(u16 memoryOffset = 0);
 
 	// PATTERN GENERATOR TABLE
-	inline u16 getPatternGeneratorAddress() {
-		return (_register[4] & 0b111) * 0x800;
-	}
-    u8* getPatternGenerator(u16 memoryOffset = 0);
+	inline u16 getPatternGeneratorAddress() { return (_register[4] & 0b111) * 0x800; }
+	u8* getPatternGenerator(u16 memoryOffset = 0);
 
-	inline u16 getPatternGeneratorAddressMode2() {
-		return (_register[4] & 0b100) * 0x800;
-	}
-    u8* getPatternGeneratorMode2(u16 memoryOffset = 0);
+	inline u16 getPatternGeneratorAddressMode2() { return (_register[4] & 0b100) * 0x800; }
+	u8* getPatternGeneratorMode2(u16 memoryOffset = 0);
 
-	inline u16 getPatternGeneratorAddressMode4() {
-		return 0;
-	}
-    u8* getPatternGeneratorMode4(u16 memoryOffset = 0);
+	inline u16 getPatternGeneratorAddressMode4() { return 0; }
+	u8* getPatternGeneratorMode4(u16 memoryOffset = 0);
 
 	// SPRITE ATTRIBUTE TABLE
-	inline u16 getSpriteAttributeTableAddress() {
-		//return (_register[5] & 0b1111111) * 0x80;
+	inline u16 getSpriteAttributeTableAddress()
+	{
+		// return (_register[5] & 0b1111111) * 0x80;
 		return (_register[5] & 0x7E) << 7;
 	}
-    u8* getSpriteAttributeTable(u8 memoryOffset = 0);
+	u8* getSpriteAttributeTable(u8 memoryOffset = 0);
 
 	// SPRITE PATTERN TABLE
 	// Also called Sprite Generator Table
-	inline u16 getSpritePatternTableAddress() {
-		return (_register[6] & 0b100) << 11;
-	}
-    u8* getSpritePatternTable(u16 memoryOffset = 0);
+	inline u16 getSpritePatternTableAddress() { return (_register[6] & 0b100) << 11; }
+	u8* getSpritePatternTable(u16 memoryOffset = 0);
 
+	inline u8 getBackdropColor() const { return (_register[7] & 0xF); }
 
+	inline u8 getTextColor() const { return (_register[7] >> 4); }
 
-	inline u8 getBackdropColor() const {
-		return (_register[7] & 0xF);
-	}
+	inline bool isActiveDisplay() const { return getBit8(_register[1], 6); }
 
-	inline u8 getTextColor() const {
-		return (_register[7] >> 4);
-	}
-
-	inline bool isActiveDisplay() const {
-		return getBit8(_register[1], 6);
-	}
-
-	inline SpriteSize getSpriteSize() const {
-		return static_cast<SpriteSize>(getBit8(_register[0], 1));
-	}
+	inline SpriteSize getSpriteSize() const { return static_cast<SpriteSize>(getBit8(_register[0], 1)); }
 };

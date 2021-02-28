@@ -4,67 +4,53 @@
 
 #include <QObject>
 
-#include "Cartridge.h"
 #include "CPU.h"
+#include "Cartridge.h"
 #include "Graphics.h"
 #include "Memory.h"
 
-System::System() : _isRunning{false}
+System::System() : _isRunning { false }
 {
-    _cartridge = new Cartridge(*this);
-    _cpu = new CPU(*this);
-    _graphics = new Graphics(*this);
-    _memory = new Memory(*this);
+	_cartridge = new Cartridge(*this);
+	_cpu = new CPU(*this);
+	_graphics = new Graphics(*this);
+	_memory = new Memory(*this);
 }
 
 System::~System()
 {
-    delete _cartridge;
-    delete _cpu;
-    delete _graphics;
-    delete _memory;
+	delete _cartridge;
+	delete _cpu;
+	delete _graphics;
+	delete _memory;
 }
 
-PtrRef<Cartridge> System::getCartridge()
-{
-    return PtrRef<Cartridge>{_cartridge};
-}
+PtrRef<Cartridge> System::getCartridge() { return PtrRef<Cartridge> { _cartridge }; }
 
-PtrRef<CPU> System::getCpu()
-{
-    return PtrRef<CPU>{_cpu};
-}
+PtrRef<CPU> System::getCpu() { return PtrRef<CPU> { _cpu }; }
 
-PtrRef<Graphics> System::getGraphics()
-{
-    return PtrRef<Graphics>{_graphics};
-}
+PtrRef<Graphics> System::getGraphics() { return PtrRef<Graphics> { _graphics }; }
 
-PtrRef<Memory> System::getMemory()
-{
-    return PtrRef<Memory>{_memory};
-}
+PtrRef<Memory> System::getMemory() { return PtrRef<Memory> { _memory }; }
 
 void System::start()
 {
-    _isRunning = true;
-    _thread = std::thread(&System::internalRun, this);
+	_isRunning = true;
+	_thread = std::thread(&System::internalRun, this);
 }
 
 void System::shutdown()
 {
-    _isRunning = false;
-    if(_thread.joinable()) {
-        _thread.join();
-    }
+	_isRunning = false;
+	if(_thread.joinable()) {
+		_thread.join();
+	}
 }
 
 // Private:
 
 void System::internalRun()
 {
-    while(_isRunning) {
-
-    }
-    emit(signal_systemTerminated());
+	while(_isRunning) { }
+	emit(signal_systemTerminated());
 }

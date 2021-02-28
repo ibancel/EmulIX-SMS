@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-#include "definitions.h"
 #include "Log.h"
 #include "MemoryBank.h"
 #include "System.h"
 #include "SystemComponent.h"
+#include "definitions.h"
 
 class MemoryBank;
 class System;
@@ -14,16 +14,15 @@ class System;
 class Memory : public SystemComponent
 {
 public:
-
 	enum Paging_Reg { kRamSelect = 0xFFFC, kBank0 = 0xFFFD, kBank1 = 0xFFFE, kBank2 = 0xFFFF };
 
-    Memory(System& parent);
+	Memory(System& parent);
 
 	void init();
 
-    virtual void write(u16 address, u8 value) override;
+	virtual void write(u16 address, u8 value) override;
 
-    virtual u8 read(u16 address) override;
+	virtual u8 read(u16 address) override;
 
 	void dumpRam();
 

@@ -1,12 +1,12 @@
 #ifndef _H_EMULATOR_LOG
 #define _H_EMULATOR_LOG
 
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <cstdlib>
-#include <fstream>
 
 #include <stdexcept>
 
@@ -15,11 +15,15 @@
 
 #if DEBUG_MODE
 #define SLOG(x) slog << x << std::endl;
-#define SLOG_THROW(x) SLOG(x); throw EMULATOR_EXCEPTION("not implemented");
+#define SLOG_THROW(x)                                                                                                  \
+	SLOG(x);                                                                                                           \
+	throw EMULATOR_EXCEPTION("not implemented");
 #define SLOG_NOENDL(x) slog << x;
 #else
 #define SLOG(x) ;
-#define SLOG_THROW(x) slog << x << std::endl; throw EMULATOR_EXCEPTION("not implemented");
+#define SLOG_THROW(x)                                                                                                  \
+	slog << x << std::endl;                                                                                            \
+	throw EMULATOR_EXCEPTION("not implemented");
 #define SLOG_NOENDL(x) ;
 #endif
 
@@ -28,9 +32,20 @@
 class Log : public std::ostream
 {
 public:
-	enum type : s16 { NONE = 0, NORMAL = 0b1, DEBUG = 0b10, NOTIF = 0b100, WARNING = 0b1000, ERROR = 0b1'0000, ALL = 0b1'1111 };
+	enum type : s16 {
+		NONE = 0,
+		NORMAL = 0b1,
+		DEBUG = 0b10,
+		NOTIF = 0b100,
+		WARNING = 0b1000,
+		ERROR = 0b1'0000,
+		ALL = 0b1'1111
+	};
 
-	Log(std::string logPath = "log.txt") : std::ostream(&_buffer), _buffer(std::cout, logPath) { _currentType = type::NORMAL; };
+	Log(std::string logPath = "log.txt") : std::ostream(&_buffer), _buffer(std::cout, logPath)
+	{
+		_currentType = type::NORMAL;
+	};
 
 	static bool printConsole;
 	static bool printFile;
@@ -46,16 +61,18 @@ public:
 	public:
 		LogBuffer(std::ostream& str, std::string logPath) : _output(str)
 		{
-            _type = type::NORMAL;
-            _outFile.open(logPath);
-        };
+			_type = type::NORMAL;
+			_outFile.open(logPath);
+		};
 
-		virtual int sync ( )
+		virtual int sync()
 		{
-			std::string strAdd = str(); str("");
+			std::string strAdd = str();
+			str("");
 
 #if !DEBUG_MODE
-			if(_type == Log::type::DEBUG) return 0;
+			if(_type == Log::type::DEBUG)
+				return 0;
 #endif
 
 			Log::type oldType = _type;
@@ -65,23 +82,26 @@ public:
 
 			bool isExiting = oldType == ERROR || (oldType == WARNING && exitOnWarning);
 
-			if(strAdd == "" && !isExiting) return 0;
+			if(strAdd == "" && !isExiting)
+				return 0;
 
 			bool isUniqueType = Log::isUniqueType(typeMin);
 
-			if(isUniqueType && (typeMin == 0 || oldType < Log::typeMin) && !isExiting) return 0;
-			else if(!isUniqueType && (oldType & typeMin) == 0 && !isExiting) return 0;
+			if(isUniqueType && (typeMin == 0 || oldType < Log::typeMin) && !isExiting)
+				return 0;
+			else if(!isUniqueType && (oldType & typeMin) == 0 && !isExiting)
+				return 0;
 
-			if (Log::printConsole || isExiting) {
+			if(Log::printConsole || isExiting) {
 				_output << "[Log]" << strAdd;
-				if (strAdd[strAdd.size() - 1] != '\n') {
+				if(strAdd[strAdd.size() - 1] != '\n') {
 					_output << '\n';
 				}
 				_output.flush();
 			}
-			if (Log::printFile) {
+			if(Log::printFile) {
 				_outFile << strAdd;
-				if (strAdd[strAdd.size() - 1] != '\n') {
+				if(strAdd[strAdd.size() - 1] != '\n') {
 					_outFile << '\n';
 				}
 			}
@@ -103,7 +123,6 @@ public:
 		Log::type _type;
 	};
 
-
 	static void print(std::string str, type typeLog = type::NORMAL);
 
 	static void saveToFile(std::string filename);
@@ -124,11 +143,21 @@ private:
 
 extern Log slog;
 
-class LogNormal { };
-class LogDebug { };
-class LogNotif { };
-class LogWarning { };
-class LogError { };
+class LogNormal
+{
+};
+class LogDebug
+{
+};
+class LogNotif
+{
+};
+class LogWarning
+{
+};
+class LogError
+{
+};
 
 extern LogNormal lnormal;
 extern LogDebug ldebug;
@@ -136,10 +165,7 @@ extern LogNotif lnotif;
 extern LogWarning lwarning;
 extern LogError lerror;
 
-inline std::string strManipulator(Log::type t)
-{
-	return Log::getTypeStr(t)+":\t";
-}
+inline std::string strManipulator(Log::type t) { return Log::getTypeStr(t) + ":\t"; }
 
 inline Log& operator<<(Log& l, LogNormal type)
 {
@@ -153,10 +179,10 @@ inline Log& operator<<(Log& l, LogNormal type)
 }
 inline Log& operator<<(Log& l, LogDebug t)
 {
-	if (Log::nbChange != 0)
+	if(Log::nbChange != 0)
 		l << std::flush;
 
-	if (!l.changeType(Log::type::DEBUG))
+	if(!l.changeType(Log::type::DEBUG))
 		return l;
 
 	l << strManipulator(Log::type::DEBUG);
@@ -165,10 +191,10 @@ inline Log& operator<<(Log& l, LogDebug t)
 }
 inline Log& operator<<(Log& l, LogNotif t)
 {
-	if (Log::nbChange != 0)
+	if(Log::nbChange != 0)
 		l << std::flush;
 
-	if (!l.changeType(Log::type::NOTIF))
+	if(!l.changeType(Log::type::NOTIF))
 		return l;
 
 	l << strManipulator(Log::type::NOTIF);

@@ -10,13 +10,9 @@ public:
 	Breakpoint(const Breakpoint::Type iType, const uint_fast64_t iValue);
 	~Breakpoint() = default;
 
-	inline Breakpoint::Type getType() const {
-		return _type;
-	}
+	inline Breakpoint::Type getType() const { return _type; }
 
-	inline uint_fast64_t getValue() const {
-		return _value;
-	}
+	inline uint_fast64_t getValue() const { return _value; }
 
 private:
 	Breakpoint::Type _type;

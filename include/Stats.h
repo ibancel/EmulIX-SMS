@@ -13,7 +13,7 @@ public:
 
 	static void add(u8 prefix, u8 opcode);
 
-	static int *getMost();
+	static int* getMost();
 
 	static void addExecutionStat(u8 numberTStates, long double microsecondExecutionTime);
 	static double getCpuExecSpeed();
@@ -22,4 +22,3 @@ private:
 	static float opcodeBySec;
 	static long double cpuExecSpeed;
 };
-

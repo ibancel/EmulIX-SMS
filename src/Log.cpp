@@ -1,5 +1,5 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include "Log.h"
 
@@ -27,15 +27,15 @@ void Log::print(string str, type typeLog)
 
 string Log::getTypeStr(type typeLog)
 {
-	if (typeLog == Log::type::NORMAL) {
+	if(typeLog == Log::type::NORMAL) {
 		return "Normal";
-	}  else if (typeLog == Log::type::DEBUG) {
+	} else if(typeLog == Log::type::DEBUG) {
 		return "Debug";
-	} else if (typeLog == Log::type::NOTIF) {
+	} else if(typeLog == Log::type::NOTIF) {
 		return "Notif";
-	} else if (typeLog == Log::type::WARNING) {
+	} else if(typeLog == Log::type::WARNING) {
 		return "Warning";
-	} else if (typeLog == Log::type::ERROR) {
+	} else if(typeLog == Log::type::ERROR) {
 		return "Error";
 	}
 
@@ -45,13 +45,13 @@ string Log::getTypeStr(type typeLog)
 bool Log::isUniqueType(s16 typeFlag)
 {
 	int oneOccurence = 0;
-	for (int i = 0; i < 16; i++) {
-		if (getBit8(typeFlag, i) == 1u) {
+	for(int i = 0; i < 16; i++) {
+		if(getBit8(typeFlag, i) == 1u) {
 			oneOccurence++;
 		}
 	}
 
-	if (oneOccurence <= 1) {
+	if(oneOccurence <= 1) {
 		return true;
 	}
 
@@ -60,8 +60,7 @@ bool Log::isUniqueType(s16 typeFlag)
 
 bool Log::changeType(type typeLog)
 {
-	if(_currentType != typeLog || nbChange == 0)
-	{
+	if(_currentType != typeLog || nbChange == 0) {
 		Log::nbChange++;
 		_currentType = typeLog;
 		_buffer.changeType(typeLog);
@@ -74,8 +73,4 @@ bool Log::changeType(type typeLog)
 	return false;
 }
 
-
-void Log::manageType()
-{
-
-}
+void Log::manageType() { }

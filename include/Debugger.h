@@ -2,8 +2,8 @@
 
 #include "Singleton.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <QKeyEvent>
 
@@ -16,23 +16,25 @@ class Memory;
 class Debugger : public Singleton<Debugger>
 {
 public:
-	enum class State { kPaused, kRunning, };
+	enum class State {
+		kPaused,
+		kRunning,
+	};
 	enum class Action { kNone, kResume, kStep };
 
-    Debugger();
+	Debugger();
 
-	inline void addBreakpoint(std::unique_ptr<Breakpoint> iNewBreakpoint) {
+	inline void addBreakpoint(std::unique_ptr<Breakpoint> iNewBreakpoint)
+	{
 		_breakpointList.push_back(std::move(iNewBreakpoint));
 	}
 
-	inline void addWatcher(std::unique_ptr<Watcher> iNewWatcher) {
-		_watcherList.push_back(std::move(iNewWatcher));
-	}
+	inline void addWatcher(std::unique_ptr<Watcher> iNewWatcher) { _watcherList.push_back(std::move(iNewWatcher)); }
 
 	void reset();
 
 	Debugger::State manage(uint_fast64_t iCurrentAddr);
-    void captureEvents(const QKeyEvent& iKeyEvent);
+	void captureEvents(const QKeyEvent& iKeyEvent);
 
 	void pause();
 	void resume();
@@ -48,6 +50,6 @@ private:
 	State _actualState;
 	uint_fast64_t _instructionCounter;
 	uint_fast64_t _cycleCounter;
-    Memory* _memory;
+	Memory* _memory;
 	bool _requestStep;
 };
