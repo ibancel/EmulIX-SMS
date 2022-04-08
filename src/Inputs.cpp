@@ -4,8 +4,11 @@
 
 #include <QDebug>
 #include <QEvent>
-#include <QGamepad>
 #include <QKeyEvent>
+
+#if SUPPORT_GAMEPAD
+#include <QGamepad>
+#endif
 
 #include "Debugger.h"
 #include "Graphics.h"
@@ -100,14 +103,16 @@ bool Inputs::eventFilter(QObject* obj, QEvent* event)
 		QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 		if(!keyEvent->isAutoRepeat()) {
 			int keyPressed = keyEvent->key();
-			//            qDebug() << keyEvent->key() << " " << event->type() << " " << keyEvent->isAutoRepeat();
+			//            qDebug() << keyEvent->key() << " " << event->type() << " "
+			//            << keyEvent->isAutoRepeat();
 			for(int indexController = 0; indexController < NUMBER_JOYPAD; indexController++) {
-				for(int indexKey = 0; indexKey < 6; indexKey++) {
-					if(_controllerConnected[indexController]
-						&& _userKeys[indexController][indexKey].type == ControllerType::kTypeKeyboard
-						&& keyPressed == std::get<Qt::Key>(_userKeys[indexController][indexKey].data)) {
-						_controller[indexController][indexKey] = (event->type() == QEvent::KeyPress);
-						return true;
+				if(_controllerConnected[indexController]) {
+					for(int indexKey = 0; indexKey < 6; indexKey++) {
+						if(_userKeys[indexController][indexKey].type == ControllerType::kTypeKeyboard
+							&& keyPressed == std::get<Qt::Key>(_userKeys[indexController][indexKey].data)) {
+							_controller[indexController][indexKey] = (event->type() == QEvent::KeyPress);
+							return true;
+						}
 					}
 				}
 			}
@@ -142,6 +147,7 @@ bool Inputs::eventFilter(QObject* obj, QEvent* event)
 
 void Inputs::addGamepadListeners(int iGamepadId, int indexJoypad)
 {
+#if SUPPORT_GAMEPAD
 	QGamepad* aGamepad = new QGamepad(iGamepadId, this);
 	for(int indexKey = 0; indexKey < NUMBER_KEYS; indexKey++) {
 		if(_userKeys[indexJoypad][indexKey].type == ControllerType::kTypeJoystick
@@ -201,6 +207,7 @@ void Inputs::addGamepadListeners(int iGamepadId, int indexJoypad)
 				[this, indexJoypad, indexKey](bool pressed) { _controller[indexJoypad][indexKey] = pressed; }));
 		}
 	}
+#endif
 }
 
 void Inputs::refreshAllGamepadListeners()
@@ -212,13 +219,14 @@ void Inputs::refreshAllGamepadListeners()
 
 	std::set<int> gamepadSet[2];
 	for(int indexJoypad = 0; indexJoypad < NUMBER_JOYPAD; indexJoypad++) {
-		for(int indexKey = 0; indexKey < NUMBER_KEYS; indexKey++) {
-			if(_controllerConnected[indexJoypad]
-				&& _userKeys[indexJoypad][indexKey].type == ControllerType::kTypeJoystick
-				&& gamepadSet[indexJoypad].find(_userKeys[indexJoypad][indexKey].joystickId)
-					== gamepadSet[indexJoypad].end()) {
-				gamepadSet[indexJoypad].insert(_userKeys[indexJoypad][indexKey].joystickId);
-				addGamepadListeners(_userKeys[indexJoypad][indexKey].joystickId, indexJoypad);
+		if(_controllerConnected[indexJoypad]) {
+			for(int indexKey = 0; indexKey < NUMBER_KEYS; indexKey++) {
+				if(_userKeys[indexJoypad][indexKey].type == ControllerType::kTypeJoystick
+					&& gamepadSet[indexJoypad].find(_userKeys[indexJoypad][indexKey].joystickId)
+						== gamepadSet[indexJoypad].end()) {
+					gamepadSet[indexJoypad].insert(_userKeys[indexJoypad][indexKey].joystickId);
+					addGamepadListeners(_userKeys[indexJoypad][indexKey].joystickId, indexJoypad);
+				}
 			}
 		}
 	}

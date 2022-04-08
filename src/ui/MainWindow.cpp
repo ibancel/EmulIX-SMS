@@ -4,10 +4,15 @@
 #include <thread>
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QPixmap>
+
+#if USE_QT_6
+#include <QScreen>
+#else
+#include <QDesktopWidget>
+#endif
 
 #include "Breakpoint.h"
 #include "CPU.h"
@@ -171,8 +176,13 @@ void MainWindow::startSystemThread()
 		Inputs::Instance()->aknowledgeStopRequest();
 		_gameWindow = std::make_unique<GameWindow>();
 		_gameWindow->setResolution(GRAPHIC_WIDTH, GRAPHIC_HEIGHT);
-		_gameWindow->setGeometry(QStyle::alignedRect(
-			Qt::LeftToRight, Qt::AlignCenter, _gameWindow->sizeHint(), qApp->desktop()->availableGeometry()));
+		_gameWindow->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, _gameWindow->sizeHint(),
+#if USE_QT_6
+			qApp->primaryScreen()->availableGeometry()
+#else
+			qApp->desktop()->availableGeometry()
+#endif
+				));
 		_gameWindow->show();
 		_system->getGraphics().ptr()->setGameWindow(_gameWindow.get());
 		_systemThread = std::thread(&MainWindow::systemThread, this);

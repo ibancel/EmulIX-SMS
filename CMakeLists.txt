@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type")
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
 
+set(USE_QT_6 true)
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -11,7 +13,7 @@ set(CMAKE_AUTOUIC ON)
 # Project variables
 set(project_name EmulIX-SMS)
 set(EXECUTABLE_OUTPUT_PATH bin/)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_SUPPRESS_REGENERATION True)
@@ -32,7 +34,7 @@ set(source_files
 	src/Debugger.cpp
 	src/definitions.cpp
 	src/EmulatorException.cpp
-        src/Frame.cpp
+	src/Frame.cpp
 	src/Graphics.cpp
 	src/GraphicsThread.cpp
 	src/Inputs.cpp
@@ -41,10 +43,10 @@ set(source_files
 	src/Memory.cpp
 	src/MemoryBank.cpp
 	src/Stats.cpp
-        src/System.cpp
-        src/ui/GameWindow.cpp
-        src/ui/MainWindow.cpp
-        src/ui/SettingsInputsWindow.cpp
+	src/System.cpp
+	src/ui/GameWindow.cpp
+	src/ui/MainWindow.cpp
+	src/ui/SettingsInputsWindow.cpp
 	src/Watcher.cpp
 )
 set(header_files
@@ -55,7 +57,7 @@ set(header_files
 	include/Debugger.h
 	include/definitions.h
 	include/EmulatorException.h
-        include/Frame.h
+	include/Frame.h
 	include/Graphics.h
 	include/GraphicsThread.h
 	include/Inputs.h
@@ -64,12 +66,12 @@ set(header_files
 	include/MemoryBank.h
 	include/Singleton.h
 	include/Stats.h
-        include/System.h
-        include/SystemComponent.h
-        include/types.h
-        include/ui/GameWindow.h
-        include/ui/MainWindow.h
-        include/ui/SettingsInputsWindow.h
+	include/System.h
+	include/SystemComponent.h
+	include/types.h
+	include/ui/GameWindow.h
+	include/ui/MainWindow.h
+	include/ui/SettingsInputsWindow.h
 	include/Watcher.h
 )
 
@@ -82,18 +84,31 @@ include_directories(include)
 
 find_package(OpenGL COMPONENTS OpenGL)
 
-find_package(Qt5 COMPONENTS Core Widgets Gamepad REQUIRED)
-
-set(qrc_files)
-qt5_add_resources(qrc_files
-    resources.qrc
-)
+if(USE_QT_6)
+    set(QT_LIBS Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
+    find_package(Qt6 COMPONENTS Core Widgets OpenGL OpenGLWidgets REQUIRED)
+    set(qrc_files resources.qrc)
+else()
+    set(QT_LIBS Qt5::Core Qt5::Gamepad Qt5::Widgets)
+    find_package(Qt5 COMPONENTS Core Widgets Gamepad REQUIRED)
+    qt5_add_resources(qrc_files resources.qrc)
+endif()
 
 add_executable(${project_name} ${source_files} ${header_files} ${ui_files} ${qrc_files})
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(${project_name} PRIVATE ${PROJECT_SOURCE_DIR})
 
-target_link_libraries(${project_name} OpenGL::GL Qt5::Core Qt5::Gamepad Qt5::Widgets pthread)
+target_link_libraries(${project_name} OpenGL::GL ${QT_LIBS} pthread)
+
+if(${USE_QT_6})
+    set(${SUPPORT_GAMEPAD} false)
+else()
+    set(${SUPPORT_GAMEPAD} true)
+endif()
+
+target_compile_definitions(${project_name} PUBLIC
+    SUPPORT_GAMEPAD=NOT ${USE_QT_6}
+    USE_QT_6=${USE_QT_6})
 
 # Visual Studio purpose
 set_target_properties(${project_name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")

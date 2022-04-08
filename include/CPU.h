@@ -146,9 +146,9 @@ private:
 
 	inline bool isIndexUsed() { return (_useRegisterIX > 0) || (_useRegisterIY > 0); }
 
-    u8 readMemoryHL(bool iUseIndex = true);
+	u8 readMemoryHL(bool iUseIndex = true);
 	void writeMemoryHL(u8 iNewValue, bool iUseIndex = true);
-    s8 retrieveIndexDisplacement();
+	s8 retrieveIndexDisplacement();
 	void incrementRefreshRegister();
 
 	// swaps:
@@ -190,9 +190,9 @@ private:
 	void setCBRegisterWithCopy(u8 iRegister, u8 iValue);
 
 	// get:
-    u8 getRegister(u8 code, bool alternate = false, bool useIndex = true);
-    u16 getRegisterPair(u8 code, bool alternate = false, bool useIndex = true) const;
-    u16 getRegisterPair2(u8 code, bool alternate = false, bool useIndex = true) const;
+	u8 getRegister(u8 code, bool alternate = false, bool useIndex = true);
+	u16 getRegisterPair(u8 code, bool alternate = false, bool useIndex = true) const;
+	u16 getRegisterPair2(u8 code, bool alternate = false, bool useIndex = true) const;
 
 	inline u8 getAluTempByte() { return _registerAluTemp + _register[R_A]; }
 

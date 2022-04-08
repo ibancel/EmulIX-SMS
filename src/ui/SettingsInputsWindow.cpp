@@ -7,8 +7,11 @@
 #include <QMessageBox>
 #include <QThread>
 #include <QTimer>
+
+#if SUPPORT_GAMEPAD
 #include <QtGamepad/QGamepad>
 #include <QtGamepad/QGamepadManager>
+#endif
 
 #include "Inputs.h"
 
@@ -38,12 +41,14 @@ SettingsInputsWindow::SettingsInputsWindow(QWidget* parent)
 		}
 	});
 
+#if SUPPORT_GAMEPAD
 	auto gamepads = QGamepadManager::instance()->connectedGamepads();
 	for(int i = 0; i < gamepads.size(); i++) {
 		QGamepad* aGamepad = new QGamepad(gamepads[i], this);
 		ui->comboBox_Player1->addItem(aGamepad->name(), QVariant(gamepads[i]));
 		ui->comboBox_Player2->addItem(aGamepad->name(), QVariant(gamepads[i]));
 	}
+#endif
 
 	loadInputsGui();
 
@@ -167,6 +172,8 @@ void SettingsInputsWindow::captureKey(
 					loop.exit();
 				}
 			}));
+
+#if SUPPORT_GAMEPAD
 			std::shared_ptr<QGamepad> aGamepad;
 			if(idController == Inputs::kJoypad1) {
 				aGamepad = std::make_shared<QGamepad>(ui->comboBox_Player1->currentData().toInt(), this);
@@ -306,6 +313,7 @@ void SettingsInputsWindow::captureKey(
 						loop.exit();
 					}
 				}));
+#endif
 		}
 
 		QString styleSheet = currentPushButton->styleSheet();

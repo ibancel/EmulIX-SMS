@@ -15,8 +15,13 @@ int main(int argc, char* argv[])
 	QSurfaceFormat::setDefaultFormat(fmt);
 
 	MainWindow w;
-	w.setGeometry(
-		QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, w.size(), qApp->desktop()->availableGeometry()));
+	w.setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, w.size(),
+#if USE_QT_6
+		qApp->primaryScreen()->availableGeometry()
+#else
+		qApp->desktop()->availableGeometry()
+#endif
+			));
 	w.show();
 	return app.exec();
 }

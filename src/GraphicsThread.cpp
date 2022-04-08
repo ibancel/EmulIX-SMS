@@ -4,8 +4,6 @@
 #include <cmath>
 #include <iomanip>
 
-#include <SFML/Graphics.hpp>
-
 #include "Frame.h"
 #include "Graphics.h"
 #include "definitions.h"
