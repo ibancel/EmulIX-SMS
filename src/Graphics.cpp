@@ -51,33 +51,39 @@ u8 Graphics::read(const u8 port)
 {
 	syncThread();
 
-	if(port == 0x7E) { // V counter
-		u16 vCounter = _graphicsThread.getCounterV();
-		return (vCounter > 0xDA ? vCounter - 6 : vCounter);
-		// TODO other values NTSC/PAL
-		return 0;
-	} else if(port == 0x7F) { // H counter
-		NOT_IMPLEMENTED("READ H COUNTER");
-		return 0;
-	} else if(port == 0xBE) { // data port
-		_controlByte = 0;
-		// TODO verify
-		const u8 result = _readAheadBuffer;
-		_readAheadBuffer = _graphicsThread.getVram(_addressVRAM);
-		incrementVramAddress();
-		return result;
-	} else if(port == 0xBF) { // control port
-		_controlByte = 0;
-		const u8 retStatusRegister = _graphicsThread.getStatusRegister();
-		_graphicsThread.setStatusRegisterBit(VDP::S_F, 0);
-		_graphicsThread.setStatusRegisterBit(VDP::S_C, 0);
-		if(getGraphicMode() != 2) {
-			_graphicsThread.setStatusRegisterBit(VDP::S_OVR, 0);
-		}
-		_graphicsThread.resetLineInterrupt();
-		return retStatusRegister;
-	} else {
-		SLOG_THROW(lwarning << hex << "Undefined Graphic port (" << static_cast<u16>(port) << ") ");
+	switch(port) {
+		case 0x7E: { // V counter
+			u16 vCounter = _graphicsThread.getCounterV();
+			return (vCounter > 0xDA ? vCounter - 6 : vCounter);
+			// TODO other values NTSC/PAL
+			return 0;
+		} break;
+		case 0x7F: { // H counter
+			NOT_IMPLEMENTED("READ H COUNTER");
+			return 0;
+		} break;
+		case 0xBE: { // data port
+			_controlByte = 0;
+			// TODO verify
+			const u8 result = _readAheadBuffer;
+			_readAheadBuffer = _graphicsThread.getVram(_addressVRAM);
+			incrementVramAddress();
+			return result;
+		} break;
+		case 0xBF: { // control port
+			_controlByte = 0;
+			const u8 retStatusRegister = _graphicsThread.getStatusRegister();
+			_graphicsThread.setStatusRegisterBit(VDP::S_F, 0);
+			_graphicsThread.setStatusRegisterBit(VDP::S_C, 0);
+			if(getGraphicMode() != 2) {
+				_graphicsThread.setStatusRegisterBit(VDP::S_OVR, 0);
+			}
+			_graphicsThread.resetLineInterrupt();
+			return retStatusRegister;
+		} break;
+		default:
+			SLOG_THROW(lwarning << hex << "Undefined Graphic port (" << static_cast<u16>(port) << ") ");
+			break;
 	}
 
 	return 0;
@@ -87,8 +93,8 @@ u8 Graphics::write(const u8 port, const u8 data)
 {
 	if(port == 0xBE) // data port
 	{
-		// std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | write data=" << (u16)data << "
-		// at " << _addressVRAM << " & coderegister=" << (u16)_codeRegister << endl;
+		// std::cout << hex << "[VDP] pc=" << CPU::instance()->getProgramCounter() << " | write data=" << (u16)data <<
+		// " at " << _addressVRAM << " & coderegister=" << (u16)_codeRegister << endl;
 		SLOG(ldebug << hex << "[VDP] write data=" << (u16)data << " at " << _addressVRAM
 					<< " & coderegister=" << (u16)_codeRegister);
 		if(_codeRegister == 3) {

@@ -26,6 +26,9 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -56,7 +59,6 @@
              <font>
               <family>MS Shell Dlg 2</family>
               <pointsize>10</pointsize>
-              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
               <underline>false</underline>
@@ -88,9 +90,30 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="pushButton_removeGame">
+            <property name="maximumSize">
+             <size>
+              <width>24</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: #d53939;</string>
+            </property>
+            <property name="text">
+             <string>x</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="pushButton_clearLibrary">
             <property name="text">
-             <string>Clear</string>
+             <string>Clear All</string>
             </property>
            </widget>
           </item>
@@ -183,7 +206,7 @@
      <x>0</x>
      <y>0</y>
      <width>516</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

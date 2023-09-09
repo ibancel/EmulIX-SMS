@@ -11,6 +11,7 @@ IndentCaseLabels: 'true'
 IndentWidth: '4'
 Language: Cpp
 NamespaceIndentation: None
+ReflowComments: false
 SpaceBeforeParens: Never
 SpacesInSquareBrackets: 'false'
 TabWidth: '4'
