@@ -15,7 +15,7 @@ public:
 	MemoryBank(u8* const iBaseAddress, const size_t iSize)
 		: _data { iBaseAddress }, _size { iSize }, _nullByte { 0 } { }
 
-	inline u8* const data() { return _data; }
+	inline const u8* data() { return _data; }
 
 	inline size_t size() const noexcept { return _size; }
 

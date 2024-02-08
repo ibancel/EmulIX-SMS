@@ -134,14 +134,19 @@ MemoryBank Memory::getBank2() { return _memoryBank2; }
 
 void Memory::switchBank(const int iBankIndex)
 {
-	assert(iBankIndex >= 0 && iBankIndex < 3);
-
-	if(iBankIndex == 0) {
-		_memoryBank0 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank0] * 0x4000);
-	} else if(iBankIndex == 1) {
-		_memoryBank1 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank1] * 0x4000);
-	} else if(iBankIndex == 2) {
-		_memoryBank2 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank2] * 0x4000);
+	switch(iBankIndex) {
+		case 0:
+			_memoryBank0 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank0] * 0x4000);
+			break;
+		case 1:
+			_memoryBank1 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank1] * 0x4000);
+			break;
+		case 2:
+			_memoryBank2 = _system.getCartridge().ptr()->getBank(_memory[Paging_Reg::kBank2] * 0x4000);
+			break;
+		default:
+			throw EMULATOR_EXCEPTION("Invalid bank to switch");
+			break;
 	}
 }
 

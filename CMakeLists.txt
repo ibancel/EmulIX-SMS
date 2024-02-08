@@ -48,12 +48,21 @@ set(source_files
 	src/ui/MainWindow.cpp
 	src/ui/SettingsInputsWindow.cpp
 	src/Watcher.cpp
+	src/Z80/instructions_0.cpp
+	src/Z80/instructions_cb.cpp
+	src/Z80/instructions_ed.cpp
 )
 set(header_files
 	include/Audio.h
 	include/Breakpoint.h
 	include/Cartridge.h
 	include/CPU.h
+	include/CPU_opcode_0_cpp.inc
+	include/CPU_opcode_0_h.inc
+	include/CPU_opcode_cb_cpp.inc
+	include/CPU_opcode_cb_h.inc
+	include/CPU_opcode_ed_cpp.inc
+	include/CPU_opcode_ed_h.inc
 	include/Debugger.h
 	include/definitions.h
 	include/EmulatorException.h

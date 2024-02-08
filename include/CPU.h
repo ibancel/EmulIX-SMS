@@ -15,6 +15,14 @@
 #include "Stats.h"
 #include "System.h"
 
+#define OPCODE_ELEMENTS_TO_INDEX(x, y, z) (x << 6) + (z << 3) + y
+#define OPCODE_TO_INDEX(x) OPCODE_ELEMENTS_TO_INDEX(((x >> 6) & 0b111), ((x >> 3) & 0b111), (x & 0b111))
+#define OPCODE_X(op) ((op >> 6) & 0b111)
+#define OPCODE_Y(op) ((op >> 3) & 0b111)
+#define OPCODE_Z(op) (op & 0b111)
+#define OPCODE_P(op) (OPCODE_Y(op) >> 1)
+#define OPCODE_Q(op) (OPCODE_Y(op) & 0b1)
+
 struct resInstruction {
 	bool DBExist = false;
 	bool IDExist = false;
@@ -46,6 +54,10 @@ class CPU
 public:
 	static constexpr double Frequency = BaseFrequency / 3.0; // in Hz = cycle/s
 	static constexpr long double MicrosecondPerState = 1.0 / (Frequency / 1'000'000.0);
+
+	static std::function<int(CPU*, u8)> Instructions_op_0[];
+	static std::function<int(CPU*, u8)> Instructions_op_cb[];
+	static std::function<int(CPU*, u8)> Instructions_op_ed[];
 
 	CPU(System& parent);
 
@@ -111,15 +123,13 @@ private:
 
 	inline bool isPrefixByte(u8 byte) const { return (byte == 0xCB || byte == 0xDD || byte == 0xED || byte == 0xFD); }
 
-	int opcode0(u8 x, u8 y, u8 z, u8 p, u8 q);
-	int opcodeCB(u8 x, u8 y, u8 z, u8 p, u8 q);
-	int opcodeED(u8 x, u8 y, u8 z, u8 p, u8 q);
-	int opcodeDD(u8 x, u8 y, u8 z, u8 p, u8 q);
-	int opcodeFD(u8 x, u8 y, u8 z, u8 p, u8 q);
+	int opcode0(u8 opcode);
+	int opcodeCB(u8 opcode);
+	int opcodeED(u8 opcode);
+	int opcodeDD(u8 opOrPrefix);
+	int opcodeFD(u8 opOrPrefix);
 
 	bool condition(u8 code);
-
-	int bliOperation(u8 x, u8 y);
 
 	int interrupt(bool nonMaskable = false);
 
@@ -197,6 +207,11 @@ private:
 	inline u8 getAluTempByte() { return _registerAluTemp + _register[R_A]; }
 
 	inline bool getFlagBit(F_NAME f) const { return (_registerFlag >> (u8)f) & 1; }
+
+	// All instructions
+#include "CPU_opcode_0_h.inc"
+#include "CPU_opcode_cb_h.inc"
+#include "CPU_opcode_ed_h.inc"
 };
 
 #endif

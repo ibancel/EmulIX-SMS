@@ -28,6 +28,7 @@
 #define NOT_IMPLEMENTED(string)                                                                                        \
 	SLOG_THROW(lwarning << std::dec << __FILE__ << "#" << __LINE__ << " NOT_IMPLEMENTED: " << string << std::endl);
 
+// NTSC Frequency
 constexpr long double BaseFrequency = 10'738'635.0 * TIME_SCALE; // in Hz = cycle/s (10'738'580.0 OR 10'738'635.0?)
 constexpr int DumpMode = 0;
 
@@ -335,7 +336,7 @@ inline u8 getLowerByte(u16 value) { return (value & 0xFF); }
 inline void setLowerByte(u16& ioToSet, u8 byte) { ioToSet = (ioToSet & 0xFF00) | byte; }
 
 // extract 8 hight bits of a 16 bits value
-inline u8 getHigherByte(u16 value) { return (value >> 8) & 0xFF; }
+inline u8 getHigherByte(u16 value) { return (value >> 8); }
 
 inline void setHigherByte(u16& ioToSet, u8 byte) { ioToSet = (ioToSet & 0x00FF) | (byte << 8); }
 
