@@ -1,4 +1,5 @@
 std::function<int(CPU*, u8)> CPU::Instructions_op_0[] = {
+    // X == 0
     std::function<int(CPU*, u8)>(&CPU::_instruction_nop),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ex),
     std::function<int(CPU*, u8)>(&CPU::_instruction_djnz),
@@ -63,6 +64,7 @@ std::function<int(CPU*, u8)> CPU::Instructions_op_0[] = {
     std::function<int(CPU*, u8)>(&CPU::_instruction_cpl),
     std::function<int(CPU*, u8)>(&CPU::_instruction_scf),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ccf),
+    // X == 1
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
@@ -127,6 +129,7 @@ std::function<int(CPU*, u8)> CPU::Instructions_op_0[] = {
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_ld_r_r),
+    // X == 2
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
@@ -191,6 +194,7 @@ std::function<int(CPU*, u8)> CPU::Instructions_op_0[] = {
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
     std::function<int(CPU*, u8)>(&CPU::_instruction_alu_r),
+    // X == 3
     std::function<int(CPU*, u8)>(&CPU::_instruction_retcc),
     std::function<int(CPU*, u8)>(&CPU::_instruction_retcc),
     std::function<int(CPU*, u8)>(&CPU::_instruction_retcc),

@@ -1,18 +1,11 @@
-#ifndef _H_EMULATOR_CPU
-#define _H_EMULATOR_CPU
+#pragma once
 
-#include <bitset>
-#include <iostream>
 #include <stdint.h>
-#include <vector>
 
-#include "Audio.h"
 #include "Cartridge.h"
 #include "Graphics.h"
 #include "Inputs.h"
 #include "Memory.h"
-#include "Singleton.h"
-#include "Stats.h"
 #include "System.h"
 
 #define OPCODE_ELEMENTS_TO_INDEX(x, y, z) (x << 6) + (z << 3) + y
@@ -43,6 +36,7 @@ enum F_NAME_MASK {
 	F_S_MASK = 0x80
 };
 
+class Audio;
 class Cartridge;
 class Graphics;
 class Inputs;
@@ -58,6 +52,8 @@ public:
 	static std::function<int(CPU*, u8)> Instructions_op_0[];
 	static std::function<int(CPU*, u8)> Instructions_op_cb[];
 	static std::function<int(CPU*, u8)> Instructions_op_ed[];
+
+	static const std::function<bool(const CPU*)> FuncCondition[];
 
 	CPU(System& parent);
 
@@ -82,6 +78,7 @@ private:
 	PtrRef<Memory> _memoryRef;
 	PtrRef<Graphics> _graphicsRef;
 	PtrRef<Cartridge> _cartridgeRef;
+	PtrRef<Audio> _audioRef;
 	Memory* _memory;
 	Graphics* _graphics;
 	Cartridge* _cartridge;
@@ -213,5 +210,3 @@ private:
 #include "CPU_opcode_cb_h.inc"
 #include "CPU_opcode_ed_h.inc"
 };
-
-#endif

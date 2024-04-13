@@ -39,6 +39,6 @@ private:
 	MemoryBank getBank1();
 	MemoryBank getBank2();
 
-	void switchBank(const int iBankIndex);
+	void switchBank(int iBankIndex);
 	void switchRamBank();
 };

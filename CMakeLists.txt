@@ -23,6 +23,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -march=native")
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 project(${project_name} VERSION 0.1)
 
 # Project files

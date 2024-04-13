@@ -2,10 +2,12 @@
 
 u8& MemoryBank::at(const size_t index)
 {
+#if DEBUG_MODE
 	if(index >= _size) {
-		// throw std::out_of_range("Index out of range");
+		throw std::out_of_range("Index out of range");
 		return _nullByte;
 	}
+#endif
 
 	return _data[index];
 }

@@ -37,10 +37,11 @@ int CPU::_instruction_jr(u8 opcode)
 
 int CPU::_instruction_jr_cond(u8 opcode)
 {
+	const u8 y = OPCODE_Y(opcode);
 	SLOG(ldebug << "=> Condition " << y - 4 << " : " << condition(y - 4) << " (d=" << hex
 				<< (s16)((s8)_memory->read(_pc)) << ")");
 	s8 addrOffset = static_cast<s8>(_memory->read(_pc++));
-	if(condition(OPCODE_Y(opcode) - 4)) {
+	if(condition(y - 4)) {
 		_pc += addrOffset;
 		return 12;
 	} else {
@@ -433,7 +434,7 @@ int CPU::_instruction_jpcc_nn(u8 opcode)
 		_pc = addr;
 	}
 	return 10;
-	SLOG(ldebug << "JP C,nn : " << (condition(y) ? "true" : "false") << " new addr: " << hex << _pc);
+	SLOG(ldebug << "JP C,nn : " << (condition(OPCODE_Y(opcode)) ? "true" : "false") << " new addr: " << hex << _pc);
 }
 
 int CPU::_instruction_jp_nn(u8 opcode)

@@ -3,7 +3,6 @@
 #include <functional>
 #include <iomanip>
 #include <sstream>
-#include <string>
 
 #include "Audio.h"
 #include "Cartridge.h"
@@ -15,6 +14,17 @@
 #include "CPU_opcode_ed_cpp.inc"
 
 using namespace std;
+
+const std::function<bool(const CPU*)> CPU::FuncCondition[] = {
+	[](const CPU* cpu) -> bool { return !cpu->getFlagBit(F_Z); },
+	[](const CPU* cpu) -> bool { return cpu->getFlagBit(F_Z); },
+	[](const CPU* cpu) -> bool { return !cpu->getFlagBit(F_C); },
+	[](const CPU* cpu) -> bool { return cpu->getFlagBit(F_C); },
+	[](const CPU* cpu) -> bool { return !cpu->getFlagBit(F_P); },
+	[](const CPU* cpu) -> bool { return cpu->getFlagBit(F_P); },
+	[](const CPU* cpu) -> bool { return !cpu->getFlagBit(F_S); },
+	[](const CPU* cpu) -> bool { return cpu->getFlagBit(F_S); },
+};
 
 CPU::CPU(System& parent)
 	: _audioRef { parent.getAudio() },
@@ -536,68 +546,7 @@ int CPU::opcodeFD(const u8 opOrPrefix)
 	return nbTStates;
 }
 
-bool CPU::condition(u8 code)
-{
-	static const std::function<bool()> funcCondition[] = {
-		[&]() -> bool { return !getFlagBit(F_Z); },
-		[&]() -> bool { return getFlagBit(F_Z); },
-		[&]() -> bool { return !getFlagBit(F_C); },
-		[&]() -> bool { return getFlagBit(F_C); },
-		[&]() -> bool { return !getFlagBit(F_P); },
-		[&]() -> bool { return getFlagBit(F_P); },
-		[&]() -> bool { return !getFlagBit(F_S); },
-		[&]() -> bool { return getFlagBit(F_S); },
-	};
-
-	return funcCondition[code]();
-}
-
-// int CPU::bliOperation(u8 x, u8 y)
-// {
-// 	int nbTStates = 0;
-
-// 	if(y == 0 && x == 4) // LDI
-// 	{
-
-// 	} else if(y == 0 && x == 5) // LDD
-// 	{
-
-// 	} else if(y == 0 && x == 6) // LDIR
-// 	{
-
-// 	} else if(y == 0 && x == 7) // LDDR
-// 	{
-
-// 	} else if(y == 1 && x == 4) // CPI
-// 	{
-
-// 	} else if(y == 1 && x == 5) // CPD
-// 	{
-
-// 	} else if(y == 1 && x == 6) // CPIR
-// 	{
-
-// 	} else if(y == 1 && x == 7) // CPDR
-// 	{
-
-// 	}
-// 	//
-// 	else if(y == 3 && x == 4) // OUTI
-// 	{
-
-// 	} else if(y == 3 && x == 5) // OUTD
-// 	{
-
-// 	} else if(y == 3 && x == 6) // OTIR
-// 	{
-
-// 	}
-// 	//
-// 	else {
-// 	}
-
-// 	return nbTStates;
-// }
+bool CPU::condition(u8 code) { return FuncCondition[code](this); }
 
 int CPU::interrupt(bool nonMaskable)
 {

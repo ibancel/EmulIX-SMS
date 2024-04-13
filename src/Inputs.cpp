@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QEvent>
 #include <QKeyEvent>
+#include <QSettings>
 
 #if SUPPORT_GAMEPAD
 #include <QGamepad>
@@ -35,6 +36,7 @@ std::string Inputs::keyToString(Inputs::ControllerKey key)
 			return "Up";
 			break;
 	}
+	return "Unknown";
 }
 
 Inputs::Inputs()
@@ -50,12 +52,28 @@ Inputs::Inputs()
 	  _isStopRequested { false },
 	  _userKeys {}
 {
-	_userKeys[0][ControllerKey::CK_UP] = { ControllerType::kTypeKeyboard, Qt::Key_Up };
-	_userKeys[0][ControllerKey::CK_DOWN] = { ControllerType::kTypeKeyboard, Qt::Key_Down };
-	_userKeys[0][ControllerKey::CK_RIGHT] = { ControllerType::kTypeKeyboard, Qt::Key_Right };
-	_userKeys[0][ControllerKey::CK_LEFT] = { ControllerType::kTypeKeyboard, Qt::Key_Left };
-	_userKeys[0][ControllerKey::CK_FIREA] = { ControllerType::kTypeKeyboard, Qt::Key_D };
-	_userKeys[0][ControllerKey::CK_FIREB] = { ControllerType::kTypeKeyboard, Qt::Key_F };
+	QSettings s { "Emul-IX", "Emul-IX" };
+	if(s.contains("joypad1")) {
+		auto inputs = reinterpret_cast<InputData*>(s.value("joypad1").toByteArray().data());
+		for(int i = 0; i < NUMBER_KEYS; i++) {
+			_userKeys[JoypadId::kJoypad1][i] = inputs[i];
+		}
+	} else {
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_UP] = { ControllerType::kTypeKeyboard, Qt::Key_Up };
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_DOWN] = { ControllerType::kTypeKeyboard, Qt::Key_Down };
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_RIGHT] = { ControllerType::kTypeKeyboard, Qt::Key_Right };
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_LEFT] = { ControllerType::kTypeKeyboard, Qt::Key_Left };
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_FIREA] = { ControllerType::kTypeKeyboard, Qt::Key_D };
+		_userKeys[JoypadId::kJoypad1][ControllerKey::CK_FIREB] = { ControllerType::kTypeKeyboard, Qt::Key_F };
+	}
+
+	if(s.contains("joypad2")) {
+		auto inputs = reinterpret_cast<InputData*>(s.value("joypad2").toByteArray().data());
+		for(int i = 0; i < NUMBER_KEYS; i++) {
+			_userKeys[JoypadId::kJoypad2][i] = inputs[i];
+		}
+	} // else: No default keys
+
 	refreshAllGamepadListeners();
 }
 

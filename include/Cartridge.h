@@ -32,18 +32,18 @@ public:
 	void readFromFile(const std::string& filename);
 	void remove();
 
-	u8 getBlock(int address);
+	u8 getBlock(size_t address);
 
 	inline size_t getSize() const noexcept { return _data.size(); }
 
-	inline MemoryBank getBank(int baseAddress)
+	inline MemoryBank getBank(size_t baseAddress)
 	{
 		if(baseAddress >= getSize()) {
 			// SLOG(lwarning << "No ROM bank at this address (" << std::hex << baseAddress << ")");
 			return MemoryBank {};
 		}
 
-		return MemoryBank(_data.data() + baseAddress, std::min(0x4000, static_cast<int>(getSize()) - baseAddress));
+		return MemoryBank(_data.data() + baseAddress, std::min(size_t { 0x4000 }, getSize() - baseAddress));
 	}
 
 	inline MemoryBank getRamBank(uint_fast8_t index)

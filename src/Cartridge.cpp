@@ -91,7 +91,7 @@ void Cartridge::remove()
 	_isLoaded = false;
 }
 
-u8 Cartridge::getBlock(int address)
+u8 Cartridge::getBlock(const size_t address)
 {
 	if(address < getSize()) {
 		return _data.at(address);

@@ -5,6 +5,7 @@
 
 #include <QDialog>
 #include <QMessageBox>
+#include <QSettings>
 #include <QThread>
 #include <QTimer>
 
@@ -26,19 +27,24 @@ SettingsInputsWindow::SettingsInputsWindow(QWidget* parent)
 	ui->progressBar_capture->setMaximum(CaptureTimeout);
 
 	connect(this, &QDialog::accepted, [&]() {
-		if(ui->comboBox_Player1->currentIndex() > 0) {
-			Inputs::Instance()->setUserKeys(Inputs::kJoypad1, _userKeys[Inputs::kJoypad1]);
-		} else {
-			InputData emptyKeys[Inputs::NUMBER_KEYS] {};
-			Inputs::Instance()->setUserKeys(Inputs::kJoypad1, emptyKeys);
-		}
+		QSettings s { "Emul-IX", "Emul-IX" };
+		InputData emptyKeys[Inputs::NUMBER_KEYS] {};
 
-		if(ui->comboBox_Player2->currentIndex() > 0) {
-			Inputs::Instance()->setUserKeys(Inputs::kJoypad2, _userKeys[Inputs::kJoypad2]);
-		} else {
-			InputData emptyKeys[Inputs::NUMBER_KEYS] {};
-			Inputs::Instance()->setUserKeys(Inputs::kJoypad2, emptyKeys);
+		InputData* inputsToSave = emptyKeys;
+		if(ui->comboBox_Player1->currentIndex() > 0) {
+			inputsToSave = _userKeys[Inputs::kJoypad1];
 		}
+		Inputs::Instance()->setUserKeys(Inputs::kJoypad1, inputsToSave);
+		s.setValue("joypad1",
+			QVariant(QByteArray(reinterpret_cast<const char*>(inputsToSave), Inputs::NUMBER_KEYS * sizeof(InputData))));
+
+		inputsToSave = emptyKeys;
+		if(ui->comboBox_Player2->currentIndex() > 0) {
+			inputsToSave = _userKeys[Inputs::kJoypad2];
+		}
+		Inputs::Instance()->setUserKeys(Inputs::kJoypad2, inputsToSave);
+		s.setValue("joypad2",
+			QVariant(QByteArray(reinterpret_cast<const char*>(inputsToSave), Inputs::NUMBER_KEYS * sizeof(InputData))));
 	});
 
 #if SUPPORT_GAMEPAD

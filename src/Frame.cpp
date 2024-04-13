@@ -1,7 +1,5 @@
 #include "Frame.h"
 
-#include <algorithm>
-
 Frame::Frame(int width, int height)
 	: _height { height },
 	  _width { width },
@@ -29,7 +27,7 @@ const u8* Frame::data(FrameOriginFormat iOriginFormat)
 	return _pixelsBottom.data();
 }
 
-PixelColor Frame::getBackdropColor() { return _backdropColor; }
+PixelColor Frame::getBackdropColor() const { return _backdropColor; }
 
 PixelColor Frame::getPixelColor(int x, int y)
 {

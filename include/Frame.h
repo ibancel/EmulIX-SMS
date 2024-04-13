@@ -32,7 +32,7 @@ public:
 
 	const u8* data(FrameOriginFormat iOriginFormat = FrameOriginFormat::kTopLeft);
 	int height() const { return _height; }
-	PixelColor getBackdropColor();
+	PixelColor getBackdropColor() const;
 	PixelColor getPixelColor(int x, int y);
 	void setBackdropColor(const PixelColor& iColor);
 	void setPixel(int x, int y, const PixelColor& iColor);

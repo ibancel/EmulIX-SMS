@@ -10,7 +10,6 @@
 #include "types.h"
 
 class Memory;
-class System;
 
 class Graphics
 {
@@ -28,8 +27,8 @@ public:
 	void stopRunning();
 	void syncThread();
 
-	u8 read(const u8 port);
-	u8 write(const u8 port, const u8 data);
+	u8 read(u8 port);
+	u8 write(u8 port, u8 data);
 
 	u8 controlAction();
 

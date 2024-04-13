@@ -481,10 +481,11 @@ void GraphicsThread::drawLine(int line)
 						if(flipV) {
 							rowPatternIndexFlipped = ((1 * 8) - 1) * 4 - rowPatternIndex;
 						}
-						u8 selectedColor = getBit8(pattern[rowPatternIndexFlipped], columnPatternIndexFlipped);
-						selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 1], columnPatternIndexFlipped) << 1;
-						selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 2], columnPatternIndexFlipped) << 2;
-						selectedColor |= getBit8(pattern[rowPatternIndexFlipped + 3], columnPatternIndexFlipped) << 3;
+						u8 selectedColor
+							= (getBit8(pattern[rowPatternIndexFlipped + 3], columnPatternIndexFlipped) << 3)
+							| (getBit8(pattern[rowPatternIndexFlipped + 2], columnPatternIndexFlipped) << 2)
+							| (getBit8(pattern[rowPatternIndexFlipped + 1], columnPatternIndexFlipped) << 1)
+							| getBit8(pattern[rowPatternIndexFlipped], columnPatternIndexFlipped);
 
 						uint_fast8_t colorByte = getColorTable(paletteSelect << 4)[selectedColor];
 						//					_drawImage.setPixel(x, y,
@@ -546,7 +547,7 @@ void GraphicsThread::drawLine(int line)
 						patternIndex += 1;
 					}
 
-					for(int xSprite = 0; xSprite < 8; ++xSprite) {
+					for(uint_fast8_t xSprite = 0; xSprite < 8; ++xSprite) {
 						int xReal = x + xSprite;
 						if(xReal < 0 || xReal >= ImageWidth) {
 							break;
@@ -555,10 +556,10 @@ void GraphicsThread::drawLine(int line)
 						u8 const* const pattern = getPatternGeneratorMode4(patternIndex * 32);
 						const u8 rowPatternIndex = ((spriteHeight == 8) ? ySprite : ySprite % 8) * 4;
 						const u8 columnPatternIndex = 7 - xSprite;
-						u8 selectedColor = getBit8(pattern[rowPatternIndex + 0], columnPatternIndex);
-						selectedColor |= getBit8(pattern[rowPatternIndex + 1], columnPatternIndex) << 1;
-						selectedColor |= getBit8(pattern[rowPatternIndex + 2], columnPatternIndex) << 2;
-						selectedColor |= getBit8(pattern[rowPatternIndex + 3], columnPatternIndex) << 3;
+						u8 selectedColor = (getBit8(pattern[rowPatternIndex + 3], columnPatternIndex) << 3)
+							| (getBit8(pattern[rowPatternIndex + 2], columnPatternIndex) << 2)
+							| (getBit8(pattern[rowPatternIndex + 1], columnPatternIndex) << 1)
+							| getBit8(pattern[rowPatternIndex + 0], columnPatternIndex);
 
 						if(selectedColor != 0) {
 							uint_fast8_t colorByte = getColorTable(VDP::ColorBank::kSecond)[selectedColor];

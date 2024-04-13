@@ -19,8 +19,8 @@ public:
 
 	inline size_t size() const noexcept { return _size; }
 
-	u8& at(const size_t index);
-	void removeStart(const size_t nbElementsToRemove);
+	u8& at(size_t index);
+	void removeStart(size_t nbElementsToRemove);
 
 private:
 	u8* _data;
